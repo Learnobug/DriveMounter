@@ -3,22 +3,19 @@ import axios from "axios"
 import { useEffect,useState } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
-import {categorizeFiles,icons} from '../lib/icons'
-export default function DriveId({params}){
-    const [files, setFiles] = useState({
-        images: [],
-        videos: [],
-        audio: [],
-        documents: [],
-        folders: [],
-        others: [],
-      });
+import { useRouter } from 'next/navigation';
+import {categorizeCategory,icons} from '../../lib/icons'
+import { useUser } from "@clerk/clerk-react";
+
+export default function Showmore({params}){
+    const { user } = useUser();
+
+   const item=params.item;
+    const [files, setFiles] = useState([]);
       const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
 
-      const toggleMenu = (index: any) => {
-        setOpenMenuIndex(openMenuIndex === index ? null : index);
-      };
-    
+
+      
   async function deleteFile(fileId) {
     const userId = user?.id;
     const response = await axios.delete('http://localhost:3000/delete-file', {
@@ -55,36 +52,41 @@ export default function DriveId({params}){
       console.error('Error downloading the file:', error.message);
   }
   }
-  
-    const FetchData=async()=>{
-       const response=await axios.get('http://localhost:3000/fetch-drive',{headers:{gmail_id:params.driveId}});
-       const { files: fetchedFiles } = response.data;
-       console.log(fetchedFiles);
  
-       const categorizedFiles = categorizeFiles(fetchedFiles);
-       setFiles(categorizedFiles);
-    }
 
-    useEffect(()=>{
-     FetchData();
-    },[])
+      const toggleMenu = (index: any) => {
+        setOpenMenuIndex(openMenuIndex === index ? null : index);
+      };
 
-    return(
-        <><Navbar/>
+      const FetchData=async()=>{
+        try {
+            const response = await axios.get("http://localhost:3000/fetch-files", {
+              headers: {
+                user_id: user?.id,
+              },
+            });
+            const { files: fetchedFiles } = response.data;
+            console.log(fetchedFiles);
       
-        <div className="col-span-4 p-4 overflow-y-auto">
-        {Object.entries(files).map(
-          ([category, items]) =>
-            items.length > 0 && (
-              <div key={category} className="mb-6">
-                <div className="flex justify-between">
+            const categorizedFiles = categorizeCategory(fetchedFiles);
+            setFiles(categorizedFiles);
+          } catch (error) {
+            console.error("Error fetching files:", error);
+          }
+     }
+ 
+     useEffect(()=>{
+      FetchData();
+     },[])
+
+     return(
+        <div>
+            <div className="p-2 gap-2flex justify-between">
                   <h3 className="text-xl font-semibold mb-4">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
+                    {item.charAt(0).toUpperCase() + item.slice(1)}
                   </h3>
-                  <button>Show More -&gt; </button>
                 </div>
-                <ul className="flex gap-10 overflow-hidden">
-                  {items.slice(0, 6).map((file: any, index: number) => (
+                {files.map((file: any, index: number) => (
                     <div key={file._id}>
                       <Link
                         target="blank"
@@ -92,7 +94,7 @@ export default function DriveId({params}){
                         key={file.id}
                         className="mb-2 flex items-center gap-2 h-40 w-40 border flex-wrap justify-center"
                       >
-                        <div>{icons[category as keyof typeof files]}</div>
+                        <div>{icons[item as keyof typeof files]}</div>
                       </Link>
                       <div className="flex justify-between">
                         <span className="text-sm text-wrap w-full">
@@ -128,14 +130,8 @@ export default function DriveId({params}){
                             </ul>
                           </div>
                         )}
-                      </div>
-                    </div>
-                  ))}
-                </ul>
-              </div>
-            )
-        )}
-      </div>
-      </>
-    )
+                        </div>
+        </div>
+     ))}
+     </div>)
 }

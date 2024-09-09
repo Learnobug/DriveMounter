@@ -5,7 +5,8 @@ import Navbar from "./components/Navbar";
 import axios from "axios";
 import { useUser } from "@clerk/clerk-react";
 import Link from "next/link";
-import {categorizeFiles,icons} from './lib/icons'
+import {categorizeFiles,icons} from '../app/lib/icons'
+import { cookies } from "next/headers";
 // import fs from 'fs'
 
 export default function Home() {
@@ -25,13 +26,23 @@ export default function Home() {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   };
 
+
+  async function deleteFile(fileId) {
+    const userId = user?.id;
+    const response = await axios.delete('http://localhost:3000/delete-file', {
+      params: { fileId, userId },
+    });
+    console.log(response.data);
+
+  }
+
   async function downloadFile(fileId) {
     try {
-      const userId=user?.id;
-      console.log('file',fileId)
-      const response = await axios.get(`http://localhost:3000/download-file`, {
+      const userId = user?.id;
+      console.log('file', fileId);
+      const response = await axios.get('http://localhost:3000/download-file', {
         params: { fileId, userId },
-        responseType: 'stream' 
+        responseType: 'blob' // Change responseType to 'blob'
       });
   
       const contentDisposition = response.headers['content-disposition'];
@@ -39,20 +50,18 @@ export default function Home() {
         ? contentDisposition.split('filename=')[1].replace(/"/g, '')
         : 'downloaded_file';
   
-   
-      const fileStream = fs.createWriteStream(fileName);
-      response.data.pipe(fileStream);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
   
-      fileStream.on('finish', () => {
-        console.log(`File downloaded successfully: ${fileName}`);
-      });
-  
-      fileStream.on('error', (err) => {
-        console.error('Error writing the file to disk:', err);
-      });
+      console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
       console.error('Error downloading the file:', error.message);
-    }
+  }
   }
  
 
@@ -105,7 +114,7 @@ export default function Home() {
                     <h3 className="text-xl font-semibold mb-4">
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </h3>
-                    <button>Show More -&gt; </button>
+                    <Link href={`/show-more/${category}`}>Show More -&gt; </Link>
                   </div>
                   <ul className="flex gap-10 overflow-hidden">
                     {items.slice(0, 6).map((file: any, index: number) => (
@@ -143,12 +152,12 @@ export default function Home() {
                                 <button onClick={()=>{downloadFile(file.id)}} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
                                   Download
                                 </button>
-                                <li className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
+                                <button onClick={()=>{deleteFile(file.id)}} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
                                   Delete
-                                </li>
-                                <li className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
+                                </button >
+                                <Link href={`/${file.webViewLink}`} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
                                   View
-                                </li>
+                                </Link>
                               </ul>
                             </div>
                           )}

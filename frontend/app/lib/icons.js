@@ -93,3 +93,13 @@ export const icons= {
 
     return categorized;
   };
+  export const categorizeCategory = (data,category) => {
+    const cat=[]
+    console.log(category)
+    data.forEach((file) => {
+      const type = file.mimeType;
+      if (type.includes(category)) cat.push(file)
+    });
+
+    return cat;
+  };

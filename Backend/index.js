@@ -164,9 +164,9 @@ app.get('/fetch-files', async (req, res) => {
     const usertoken=[];
 
     const allusers=await User.find({Admin_id:userid});
-
+    console.log(allusers)
     allusers.map((u)=> usertoken.push(u.access_token))
-    let allFiles = [];
+  
     for (const tokens of usertoken) {
       // console.log(tokens)
       const files = await fetch_data(tokens);
@@ -213,7 +213,7 @@ app.get('/download-file', async (req, res) => {
 
     const fileMetadata = await drive.files.get({ fileId: fileId, fields: 'name' });
     const fileName = fileMetadata.data.name;
-
+  
     const fileResponse = await drive.files.get(
       { fileId: fileId, alt: 'media' },
       { responseType: 'stream' }
@@ -226,6 +226,33 @@ app.get('/download-file', async (req, res) => {
   } catch (error) {
     console.error('Error downloading file:', error.message);
     res.status(500).send('Error downloading file');
+  }
+});
+
+app.delete('/delete-file', async (req, res) => {
+  const { fileId, userId } = req.query;
+  
+  if (!fileId || !userId) {
+    return res.status(400).send('fileId and userId are required');
+  }
+
+  try {
+
+    const user = await User.findOne({ Admin_id: userId });
+    if (!user || !user.access_token) {
+      return res.status(404).send('User not found or user has no access token');
+    }
+
+    oauth2Client.setCredentials(user.access_token);
+
+    const drive = google.drive({ version: 'v2', auth: oauth2Client });
+    console.log(fileId)
+    await drive.files.delete({ fileId: fileId });
+
+    res.status(200).send(`File with ID ${fileId} has been deleted successfully.`);
+  } catch (error) {
+    console.error('Error deleting file:', error.message);
+    res.status(500).send('Error deleting file');
   }
 });
 
