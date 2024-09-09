@@ -7,6 +7,7 @@ import {
   RedirectToSignIn
 } from '@clerk/nextjs'
 import './globals.css'
+import Navbar from './components/Navbar'
 export default function RootLayout({
   children,
 }: {

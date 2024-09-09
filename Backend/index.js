@@ -19,10 +19,10 @@ app.use(cookieParser());
 connectToDatabase();
 
 
-const CLIENT_ID = process.env.CLIENT_ID
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI
-const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
+// const CLIENT_ID = process.env.CLIENT_ID
+// const CLIENT_SECRET = process.env.CLIENT_SECRET;
+// const REDIRECT_URI = process.env.REDIRECT_URI
+// const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
 
 async function getUserInfo(accessToken) {
   try {
@@ -149,6 +149,14 @@ async function UplaodFile(tokens) {
   }
 }
 
+app.get('/fetch-drive',async(req,res)=>{
+  const gmail_id=req.headers['gmail_id'];
+  const usertoken=[];
+
+  const user=await User.findOne({gmail_id:gmail_id});
+  const files = await fetch_data(user.access_token);
+  res.json({'files':files});
+})
 
 app.get('/fetch-files', async (req, res) => {
   try {
@@ -182,6 +190,42 @@ app.get('/get-accounts', async (req, res) => {
   } catch (error) {
       console.error("Error fetching accounts:", error.message);
       res.status(500).send('Error fetching accounts');
+  }
+});
+
+app.get('/download-file', async (req, res) => {
+  
+  const { fileId, userId } = req.query;
+  if (!fileId || !userId) {
+    return res.status(400).send('fileId and userId are required');
+  }
+
+  try {
+   
+    const user = await User.findOne({ Admin_id: userId });
+    if (!user || !user.access_token) {
+      return res.status(404).send('User not found or user has no access token');
+    }
+  
+    oauth2Client.setCredentials(user.access_token);
+
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+    const fileMetadata = await drive.files.get({ fileId: fileId, fields: 'name' });
+    const fileName = fileMetadata.data.name;
+
+    const fileResponse = await drive.files.get(
+      { fileId: fileId, alt: 'media' },
+      { responseType: 'stream' }
+    );
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+
+    fileResponse.data.pipe(res);
+  } catch (error) {
+    console.error('Error downloading file:', error.message);
+    res.status(500).send('Error downloading file');
   }
 });
 
