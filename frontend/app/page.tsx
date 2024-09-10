@@ -34,7 +34,6 @@ export default function Home() {
         params: { fileId, userId },
         responseType: 'blob',
       });
-  
       const contentDisposition = response.headers['content-disposition'];
       const fileName = contentDisposition
         ? contentDisposition.split('filename=')[1].replace(/"/g, '')
@@ -148,7 +147,7 @@ export default function Home() {
                                 <button onClick={() => deleteFile(file.id)} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
                                   Delete
                                 </button>
-                                <Link href={`/${file.webViewLink}`} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
+                                <Link target="blank" href={`${file.webViewLink}`} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
                                   View
                                 </Link>
                               </ul>

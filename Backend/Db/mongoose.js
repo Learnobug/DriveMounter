@@ -1,7 +1,7 @@
 import { MongoClient }  from 'mongodb'
 import mongoose from 'mongoose';
 
-const mongoURI=process.env.DB_URI
+const mongoURI='mongodb+srv://gunjan:45vUIhHonjxChBBG@cluster0.6olt1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 const client = new MongoClient(mongoURI, { serverSelectionTimeoutMS: 60000,
     useNewUrlParser: true,
     useUnifiedTopology: true,
