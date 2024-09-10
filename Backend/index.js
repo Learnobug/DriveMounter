@@ -4,7 +4,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser';
 import axios from 'axios';
-
+import { redis } from './Db/redis.js';
 import { User } from './models/User.js';
 import { connectToDatabase } from './Db/mongoose.js';
 
@@ -19,9 +19,15 @@ app.use(cookieParser());
 connectToDatabase();
 
 
-// const CLIENT_ID = process.env.CLIENT_ID
-// const CLIENT_SECRET = process.env.CLIENT_SECRET;
-// const REDIRECT_URI = process.env.REDIRECT_URI
+
+const SCOPES =  ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive.file', 
+  'https://www.googleapis.com/auth/userinfo.profile', 
+  'https://www.googleapis.com/auth/userinfo.email'   ]
+
+
+const CLIENT_ID = process.env.CLIENT_ID
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI
 // const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
 
 async function getUserInfo(accessToken) {
@@ -95,31 +101,65 @@ app.get('/oauth2callback', async (req, res) => {
   }
 });
 
-async function fetch_data(tokens) {
+app.get('/fetch-files', async (req, res) => {
+  try {
+    const userId = req.headers['user_id'];
+     const key=`${userId}data`
+    const cached= await redis.get(key);
+    if(cached)
+    {
+      return res.send(cached);
+    }
+    const userTokens = [];
+    const pageSize = parseInt(req.query.pageSize) || 10; 
+    const pageToken = req.query.pageToken || null; 
+ 
+    
+    const allUsers = await User.find({ Admin_id: userId });
+    allUsers.forEach((user) => userTokens.push(user.access_token));
+
+    
+    let allFiles = [];
+
+    for (const tokens of userTokens) {
+      const { files, nextPageToken } = await fetchFilesWithPagination(tokens, pageSize, pageToken);
+      console.log(files);
+      allFiles = allFiles.concat(files);
+
+      if (nextPageToken) {
+        res.json({ files: allFiles, nextPageToken });
+        return;
+      }
+    }
+    await redis.set(key,JSON.stringify({ files: allFiles, nextPageToken: null }))
+    res.json({ files: allFiles, nextPageToken: null });
+  } catch (error) {
+    console.error('Error fetching all files:', error);
+    res.status(500).send('Error fetching all files.');
+  }
+});
+
+async function fetchFilesWithPagination(tokens, pageSize, pageToken) {
   try {
     oauth2Client.setCredentials(tokens);
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
-    let files = [];
-    let pageToken = null;
+    const response = await drive.files.list({
+      pageSize: pageSize,
+      fields: 'nextPageToken, files(id, name, size, mimeType, webViewLink, thumbnailLink)',
+      pageToken: pageToken,
+    });
 
-    do {
-      const response = await drive.files.list({
-        pageSize: 100,
-        fields: 'nextPageToken, files(id, name, size, mimeType, webViewLink,thumbnailLink)',
-        pageToken: pageToken,
-      });
-
-      files = files.concat(response.data.files);
-      pageToken = response.data.nextPageToken;
-
-    } while (pageToken);
-
-    return files;
+    return { files: response.data.files, nextPageToken: response.data.nextPageToken };
   } catch (e) {
     console.error('Error fetching files:', e);
     throw e;
   }
 }
+
+
+
+
+
 async function UplaodFile(tokens) {
   if (!tokens) {
     console.error('No tokens available.');
@@ -152,38 +192,49 @@ async function UplaodFile(tokens) {
 app.get('/fetch-drive',async(req,res)=>{
   const gmail_id=req.headers['gmail_id'];
   const usertoken=[];
-
+  
+  cached= await redis.get(gmail_id);
+  if(cached)
+  {
+    return res.send(gmail_id);
+  }
   const user=await User.findOne({gmail_id:gmail_id});
-  const files = await fetch_data(user.access_token);
-  res.json({'files':files});
+  const pageSize = parseInt(req.query.pageSize) || 10; 
+  const pageToken = req.query.pageToken || null; 
+  let allFiles = [];
+
+    do{
+      const { files, nextPageToken } = await fetchFilesWithPagination(user.access_token, pageSize, pageToken);
+      console.log(files);
+      allFiles = allFiles.concat(files);
+
+      if (nextPageToken) {
+        res.json({ files: allFiles, nextPageToken });
+        return;
+      }
+      pageToken=nextPageToken;
+    }while(pageToken)
+
+  await redis.set(gmail_id,JSON.stringify({'files':allFiles}))
+  res.json({'files':allFiles});
 })
 
-app.get('/fetch-files', async (req, res) => {
-  try {
-    const userid=req.headers['user_id'];
-    const usertoken=[];
 
-    const allusers=await User.find({Admin_id:userid});
-    console.log(allusers)
-    allusers.map((u)=> usertoken.push(u.access_token))
-  
-    for (const tokens of usertoken) {
-      // console.log(tokens)
-      const files = await fetch_data(tokens);
-      allFiles = allFiles.concat(files);
-    }
-    // console.log(allFiles)
-    res.json({'files':allFiles});
-  } catch (error) {
-    res.status(500).send('Error fetching all files.');
-  }
-});
 
 app.get('/get-accounts', async (req, res) => {
   const userid = req.headers['user_id'];
-  // console.log(userid)
+    const key=`${userid}account`
+    const cached=await redis.get(key);
+    if(cached)
+    {
+       return res.send(cached)
+    }
+
   try {
       const response = await User.find({ Admin_id: userid });
+      await redis.set(key,JSON.stringify({
+        "Accounts": response
+    }))
       res.json({
           "Accounts": response
       });

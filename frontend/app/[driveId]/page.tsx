@@ -57,7 +57,11 @@ export default function DriveId({params}){
   }
   
     const FetchData=async()=>{
-       const response=await axios.get('http://localhost:3000/fetch-drive',{headers:{gmail_id:params.driveId}});
+      const pageToken=null;
+       const response=await axios.get('http://localhost:3000/fetch-drive',{headers:{gmail_id:params.driveId}, params: {
+        pageSize: 100,
+        pageToken: pageToken
+      }},);
        const { files: fetchedFiles } = response.data;
        console.log(fetchedFiles);
  
@@ -70,8 +74,8 @@ export default function DriveId({params}){
     },[])
 
     return(
-        <><Navbar/>
-      
+        <>
+        <Navbar/>
         <div className="col-span-4 p-4 overflow-y-auto">
         {Object.entries(files).map(
           ([category, items]) =>

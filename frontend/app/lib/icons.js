@@ -1,5 +1,5 @@
 export const icons= {
-    images: (
+    image: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -13,7 +13,7 @@ export const icons= {
         />
       </svg>
     ),
-    videos: (
+    video: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -34,7 +34,7 @@ export const icons= {
         <path d="M6 10.5a.75.75 0 0 1 .75.75v1.5a5.25 5.25 0 1 0 10.5 0v-1.5a.75.75 0 0 1 1.5 0v1.5a6.751 6.751 0 0 1-6 6.709v2.291h3a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1 0-1.5h3v-2.291a6.751 6.751 0 0 1-6-6.709v-1.5A.75.75 0 0 1 6 10.5Z" />
       </svg>
     ),
-    documents: (
+    document: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -45,7 +45,7 @@ export const icons= {
         <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
       </svg>
     ),
-    folders: (
+    folder: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -73,33 +73,40 @@ export const icons= {
   };
   export const categorizeFiles = (data) => {
     const categorized = {
-      images: [],
-      videos: [],
+      image: [],
+      video: [],
       audio: [],
-      documents: [],
-      folders: [],
+      document: [],
+      folder: [],
       others: [],
     };
 
     data.forEach((file) => {
       const type = file.mimeType;
-      if (type.includes("image")) categorized.images.push(file);
-      else if (type.includes("video")) categorized.videos.push(file);
+      if (type.includes("image")) categorized.image.push(file);
+      else if (type.includes("video")) categorized.video.push(file);
       else if (type.includes("audio")) categorized.audio.push(file);
-      else if (type.includes("file")) categorized.documents.push(file);
-      else if (type.includes("folder")) categorized.folders.push(file);
+      else if (type.includes("file")) categorized.document.push(file);
+      else if (type.includes("folder")) categorized.folder.push(file);
       else categorized.others.push(file);
     });
 
     return categorized;
   };
   export const categorizeCategory = (data,category) => {
+    if(category=='others')
+    {
+      return data.filter(file => {
+        const type = file.mimeType;
+  
+        return !type.includes('image') && !type.includes('audio') && !type.includes('video') && !type.includes('document') && !type.includes('folder');
+      });
+    }
     const cat=[]
-    console.log(category)
+   
     data.forEach((file) => {
       const type = file.mimeType;
-      if (type.includes(category)) cat.push(file)
-    });
-
+      if (type.includes(`${category}`)) cat.push(file)
+    }); 
     return cat;
   };
