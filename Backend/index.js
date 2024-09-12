@@ -25,14 +25,14 @@ connectToDatabase();
 
 
 
-// const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
-
 
 
 const CLIENT_ID = process.env.CLIENT_ID
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI
-// const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
+const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive.file', 
+  'https://www.googleapis.com/auth/userinfo.profile', 
+  'https://www.googleapis.com/auth/userinfo.email'   ]
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -83,12 +83,13 @@ app.get('/oauth2callback', async (req, res) => {
     const userinfo= await getUserInfo(tokens.access_token);
     // console.log(id);
     // console.log('User Info:', userinfo);
-    const userexist=await User.find({gmail_id:userinfo.gmail_id});
+    const userexist=await User.findOne({gmail_id:userinfo.gmail_id});
     if(userexist)
     {
       res.redirect('http://localhost:3001');
       return;
     }
+
     
     const storage=await getDriveStorageDetails(tokens)
     const storageQuota = storage.storageQuota;
@@ -97,12 +98,12 @@ app.get('/oauth2callback', async (req, res) => {
     const bytesToGB = (bytes) => (parseInt(bytes) / (1024 ** 3)).toFixed(4); 
     
     const totalGB = bytesToGB(storageQuota.limit);
-    const usedGB = bytesToGB(storageQuota.usage).toFixed(2);
+    const usedGB = bytesToGB(storageQuota.usage);
     const usedInDriveGB = bytesToGB(storageQuota.usageInDrive);
     
     // Calculate percentage used
-    const percentageUsed = ((usedGB / totalGB) * 100).toFixed(2);
-    
+    const percentageUsed = ((usedGB / totalGB) * 100);
+    const gb=Number(usedGB).toFixed(2);
   
     const newuser= await User.create({
       Admin_id: id,
@@ -112,9 +113,10 @@ app.get('/oauth2callback', async (req, res) => {
       last_name:userinfo.family_name,
       picture:userinfo.picture,
       access_token:tokens,
-      Storage:usedGB
+      Storage:gb
     })
     await newuser.save();
+    console.log(newuser)
     // res.send('Google Drive connected successfully!');
     res.redirect('http://localhost:3001')
 
@@ -251,8 +253,9 @@ app.post('/upload-file', upload.single('file'), async (req, res) => {
   const storageQuota = storage.storageQuota;
 
   const bytesToGB = (bytes) => (parseInt(bytes) / (1024 ** 3)).toFixed(4); 
-    const usedGB = bytesToGB(storageQuota.usage).toFixed(2);
-    user.Storage=usedGB;
+    const usedGB = bytesToGB(storageQuota.usage);
+    const gb=Number(usedGB).toFixed(2);
+    user.Storage=gb;
     await user.save();
 
   res.json({ msg: 'File uploaded successfully' });

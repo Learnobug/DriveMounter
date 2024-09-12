@@ -1,6 +1,9 @@
 import { Redis } from "ioredis";
+import { configDotenv } from 'dotenv';
 
-const REDIS_URL = 'rediss://default:AVNS_csTn_tNVAX4o2pOOaQt@caching-35163c0a-aggarwalgunjan597-f798.g.aivencloud.com:28274'
+configDotenv();
+
+const REDIS_URL = process.env.REDIS_URI 
 
 const getRedisUrl = () => {
     if(REDIS_URL)
