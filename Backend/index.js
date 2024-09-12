@@ -130,13 +130,12 @@ app.get('/fetch-files', async (req, res) => {
   try {
     const userId = req.headers['user_id'];
     const key = `${userId}data`;
-    const cached = await redis.get(key);
-    const parsed = JSON.parse(cached);
-    if (parsed.files.length > 0) {
-      console.log('cache called');
-      return res.send(JSON.parse(cached));
-    }
-    console.log('here');
+    // const cached = await redis.get(key);
+    // const parsed = JSON.parse(cached);
+    // if (parsed.files.length > 0) {
+    //   return res.send(JSON.parse(cached));
+    // }
+    // console.log('here');
     const userTokens = [];
     const pageSize = parseInt(req.query.pageSize) || 10;
     let pageToken = req.query.pageToken || null;
@@ -145,7 +144,7 @@ app.get('/fetch-files', async (req, res) => {
     allUsers.forEach((user) => userTokens.push(user.access_token));
 
     let allFiles = [];
-    let finalNextPageToken = null;
+ 
 
     for (const tokens of userTokens) {
       const { files, nextPageToken } = await fetchFilesWithPagination(tokens, pageSize, pageToken);
@@ -153,8 +152,8 @@ app.get('/fetch-files', async (req, res) => {
       allFiles = allFiles.concat(files);
 
       if (nextPageToken) {
-        finalNextPageToken = nextPageToken;
-        break;
+        res.json({ files: allFiles, nextPageToken });
+        return;
       }
     }
     await setKeyWithDefaultExpiry(key,JSON.stringify({ files: allFiles, nextPageToken: null }))
