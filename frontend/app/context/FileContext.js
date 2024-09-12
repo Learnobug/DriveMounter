@@ -63,7 +63,7 @@ export const FilesProvider = ({ children }) => {
   };
 
   return (
-    <FilesContext.Provider value={{ files, loading, fetchFiles }}>
+    <FilesContext.Provider value={{ files, loading,nextPageToken, fetchFiles }}>
       {children}
     </FilesContext.Provider>
   );
