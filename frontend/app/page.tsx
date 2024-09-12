@@ -79,15 +79,13 @@ export default function Home() {
   }, [loading, files]);
 
   const loadMoreFiles = () => {
-    if (nextPageToken) {
-      fetchFiles(100, nextPageToken); 
-    }
+      fetchFiles(10, nextPageToken); 
   };
 
   const handleClick = async () => {
     try {
+       loadMoreFiles();
       await Get_accounts();
-      await fetchFiles();
     } catch (error) {
       console.error("Error fetching files:", error);
     }

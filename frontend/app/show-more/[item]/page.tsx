@@ -22,7 +22,7 @@ export default function Showmore({ params }) {
   const [pageToken, setPageToken] = useState(null); 
   const [loading, setLoading] = useState(false);
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
-
+  const [loadmore,setloadmore]=useState(true);
   const toggleMenu = (index: any) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   };
@@ -77,6 +77,7 @@ export default function Showmore({ params }) {
   };
   
   const fetchFiles = async (nextPageToken) => {
+    console.log(pageToken)
     setLoading(true);
     try {
       const response = await axios.get("http://localhost:3000/fetch-files", {
@@ -85,15 +86,16 @@ export default function Showmore({ params }) {
         },
         params: {
           pageSize: 100,
-          pageToken: nextPageToken || pageToken
+          pageToken: nextPageToken
         }
       });
       const { files: fetchedFiles, nextPageToken: newPageToken } = response.data;
 
       const categorizedFiles = categorizeCategory(fetchedFiles, item);
       addFiles(categorizedFiles);
-      console.log('assssssss',files[item])
       setPageToken(newPageToken);
+      if(!newPageToken) setloadmore(false);
+     
     } catch (error) {
       console.error("Error fetching files:", error);
     } finally {
@@ -168,7 +170,7 @@ export default function Showmore({ params }) {
       ))}
       </div>
       {loading && <p>Loading more files...</p>}
-      {pageToken && !loading && (
+      {loadmore &&pageToken && !loading && (
         <button onClick={handleLoadMore} className="py-2 px-4 mt-4 bg-blue-500 text-white rounded">
           Load More
         </button>
