@@ -267,7 +267,7 @@ export default function EnhancedDriveMounter() {
                         </Card>
                       ))}
                     <Card className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden">
-                      <Link href={`/show-more/${type}`}>
+                      <Link href={`/show/${type}`}>
                         <CardContent className="p-4 flex flex-col items-center justify-center">
                           <ChevronRight className="h-8 w-8" />
                           <p className="mt-2 text-sm text-center truncate w-full">
