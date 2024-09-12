@@ -26,7 +26,12 @@ import axios from "axios";
 import { useFiles } from "../context/FileContext";
 import { icons } from "../lib/icons";
 import Link from "next/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const fileTypes = ["image", "document", "folder", "audio", "video", "others"];
 
@@ -105,7 +110,11 @@ export default function EnhancedDriveMounter() {
 
       console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
-      console.error("Error downloading the file:", error.message);
+      if (error instanceof Error) {
+        console.error("Error downloading the file:", error.message);
+      } else {
+        console.error("Error downloading the file:", error);
+      }
     }
   }
 
@@ -117,7 +126,7 @@ export default function EnhancedDriveMounter() {
       });
       console.log(response.data);
     } catch (error) {
-      console.error("Error deleting the file:", error.message);
+      console.error("Error deleting the file:", (error as Error).message);
     }
   }
 
@@ -129,24 +138,27 @@ export default function EnhancedDriveMounter() {
           <h1 className="text-2xl font-bold">Drive Mounter</h1>
         </div>
         <nav className="mt-6">
-          <a
-            href="#"
+          <Link
+            href="/dashboard"
             className="block px-4 py-2 text-sm font-medium text-gray-700"
           >
             Dashboard
-          </a>
-          <a
-            href="#"
-            className="block px-4 py-2 text-sm font-medium text-gray-700"
-          >
-            My Drives
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/all"
             className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
           >
             All Drives
-          </a>
+          </Link>
+          {accounts.map((drive) => (
+            <Link
+              className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              key={drive.gmail_id}
+              href={`${drive.gmail_id}`}
+            >
+              {drive.name}
+            </Link>
+          ))}
         </nav>
       </aside>
 
@@ -207,6 +219,7 @@ export default function EnhancedDriveMounter() {
                           .toLowerCase()
                           .includes(searchQuery.toLowerCase())
                       )
+                      .slice(0, 15)
                       .map((file: any, index: number) => (
                         <Card
                           key={index}
@@ -253,6 +266,16 @@ export default function EnhancedDriveMounter() {
                           </CardContent>
                         </Card>
                       ))}
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden">
+                      <Link href={`/show-more/${type}`}>
+                        <CardContent className="p-4 flex flex-col items-center justify-center">
+                          <ChevronRight className="h-8 w-8" />
+                          <p className="mt-2 text-sm text-center truncate w-full">
+                            Show All
+                          </p>
+                        </CardContent>
+                      </Link>
+                    </Card>
                   </div>
                 </ScrollArea>
               </TabsContent>

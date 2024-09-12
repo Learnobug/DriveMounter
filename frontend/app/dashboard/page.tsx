@@ -83,22 +83,22 @@ export default function DriveMounter() {
           <h1 className="text-2xl font-bold text-gray-800">Drive Mounter</h1>
         </div>
         <nav className="mt-6">
-          <a
-            href="#"
+          <Link
+            href="/dashboard"
             className="flex items-center px-4 py-2 text-gray-700 bg-gray-200"
           >
             <Home className="mr-3" />
             Dashboard
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="/all"
             className="flex items-center px-4 py-2 mt-2 text-gray-600 hover:bg-gray-200"
           >
             <MemoryStick className="mr-3" />
             All Drives
-          </a>
+          </Link>
           {accounts.map((account) => (
-            <a
+            <Link
               key={account.id}
               href={`/${account.gmail_id}`}
               className="flex items-center px-4 py-2 mt-2 text-gray-600 hover:bg-gray-200"
@@ -109,7 +109,7 @@ export default function DriveMounter() {
                 className="w-8 h-8 rounded-full mr-2"
               />
               {account.name}
-            </a>
+            </Link>
           ))}
         </nav>
       </aside>
