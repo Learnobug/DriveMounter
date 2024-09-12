@@ -13,7 +13,9 @@ import { configDotenv } from 'dotenv';
 import { setKeyWithDefaultExpiry } from './Db/redis.js';
 configDotenv();
 const app = express();
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition', 'X-File-Name']
+}));
 
 app.use(express.json({ limit: '50mb' })); 
 
@@ -23,9 +25,8 @@ connectToDatabase();
 
 
 
-const SCOPES =  ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive.file', 
-  'https://www.googleapis.com/auth/userinfo.profile', 
-  'https://www.googleapis.com/auth/userinfo.email'   ]
+// const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
+
 
 
 const CLIENT_ID = process.env.CLIENT_ID
@@ -86,6 +87,7 @@ app.get('/oauth2callback', async (req, res) => {
     if(userexist)
     {
       res.redirect('http://localhost:3001');
+      return;
     }
     
     const storage=await getDriveStorageDetails(tokens)
@@ -125,22 +127,23 @@ app.get('/oauth2callback', async (req, res) => {
 app.get('/fetch-files', async (req, res) => {
   try {
     const userId = req.headers['user_id'];
-     const key=`${userId}data`
-    const cached= await redis.get(key);
-    if(cached)
-    {
-      return res.send(cached);
+    const key = `${userId}data`;
+    const cached = await redis.get(key);
+    const parsed = JSON.parse(cached);
+    if (parsed.files.length > 0) {
+      console.log('cache called');
+      return res.send(JSON.parse(cached));
     }
+    console.log('here');
     const userTokens = [];
-    const pageSize = parseInt(req.query.pageSize) || 10; 
-    const pageToken = req.query.pageToken || null; 
- 
-    
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    let pageToken = req.query.pageToken || null;
+
     const allUsers = await User.find({ Admin_id: userId });
     allUsers.forEach((user) => userTokens.push(user.access_token));
 
-    
     let allFiles = [];
+    let finalNextPageToken = null;
 
     for (const tokens of userTokens) {
       const { files, nextPageToken } = await fetchFilesWithPagination(tokens, pageSize, pageToken);
@@ -148,8 +151,8 @@ app.get('/fetch-files', async (req, res) => {
       allFiles = allFiles.concat(files);
 
       if (nextPageToken) {
-        res.json({ files: allFiles, nextPageToken });
-        return;
+        finalNextPageToken = nextPageToken;
+        break;
       }
     }
     await setKeyWithDefaultExpiry(key,JSON.stringify({ files: allFiles, nextPageToken: null }))
@@ -312,33 +315,66 @@ app.get('/get-accounts', async (req, res) => {
 });
 
 app.get('/download-file', async (req, res) => {
-  
   const { fileId, userId } = req.query;
   if (!fileId || !userId) {
     return res.status(400).send('fileId and userId are required');
   }
 
   try {
-   
     const user = await User.findOne({ Admin_id: userId });
     if (!user || !user.access_token) {
       return res.status(404).send('User not found or user has no access token');
     }
-  
+
     oauth2Client.setCredentials(user.access_token);
 
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-    const fileMetadata = await drive.files.get({ fileId: fileId, fields: 'name' });
-    const fileName = fileMetadata.data.name;
-  
-    const fileResponse = await drive.files.get(
-      { fileId: fileId, alt: 'media' },
-      { responseType: 'stream' }
-    );
+    const fileMetadata = await drive.files.get({ fileId: fileId, fields: 'name, mimeType' });
+    let fileName = fileMetadata.data.name;
+    const mimeType = fileMetadata.data.mimeType;
+
+    let fileResponse;
+    let exportMimeType;
+    let exportFormat;
+
+    // Determine the export MIME type based on the requested format
+    if (mimeType.includes('application/vnd.google-apps')) {
+      switch (mimeType) {
+        case 'application/vnd.google-apps.document':
+          exportFormat = 'docx'; // Default export format for Google Docs
+          exportMimeType = exportFormat === 'docx' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'; // Export Google Docs as PDF or DOCX
+          break;
+        case 'application/vnd.google-apps.spreadsheet':
+          exportFormat = 'xlsx'; // Default export format for Google Sheets
+          exportMimeType = exportFormat === 'xlsx' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; // Export Google Sheets as PDF or XLSX
+          break;
+        case 'application/vnd.google-apps.presentation':
+          exportFormat = 'pptx'; // Default export format for Google Slides
+          exportMimeType = exportFormat === 'pptx' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'; // Export Google Slides as PDF or PPTX
+          break;
+        default:
+          return res.status(400).send('Unsupported Google Workspace document type');
+      }
+
+      fileResponse = await drive.files.export(
+        { fileId: fileId, mimeType: exportMimeType },
+        { responseType: 'stream' }
+      );
+      fileName = fileName + `.${exportFormat}`;
+      console.log(fileName);
+      res.setHeader('Content-Type', exportMimeType);
+    } else {
+      // For non-Google Workspace files, download the file directly
+      fileResponse = await drive.files.get(
+        { fileId: fileId, alt: 'media' },
+        { responseType: 'stream' }
+      );
+      res.setHeader('Content-Type', 'application/octet-stream');
+    }
 
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('X-File-Name', fileName);
 
     fileResponse.data.pipe(res);
   } catch (error) {

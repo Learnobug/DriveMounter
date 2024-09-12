@@ -47,13 +47,17 @@ export const FilesProvider = ({ children }) => {
           pageToken: pageToken
         }
       });
+      console.log(response.data);
         const { files: fetchedFiles,nextPageToken } = response.data;
           const categorizedFiles = categorizeFiles(fetchedFiles);
           addFiles(categorizedFiles);
+          console.log(categorizedFiles);
           setNextPageToken(nextPageToken);
+          console.log('Reached here');
     } catch (error) {
       console.error('Error fetching files:', error);
     } finally {
+      console.log('here now')
       setLoading(false);
     }
   };
