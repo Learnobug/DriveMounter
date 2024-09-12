@@ -1,6 +1,6 @@
 "use client"
 import axios from "axios"
-import { useEffect,useState } from "react";
+import { useEffect,useState,useRef } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import {categorizeFiles,icons} from '../lib/icons'
@@ -13,6 +13,7 @@ export default function DriveId({params}){
         folders: [],
         others: [],
       });
+      const fileInputRef = useRef(null);
       const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
 
       const toggleMenu = (index: any) => {
@@ -55,7 +56,28 @@ export default function DriveId({params}){
       console.error('Error downloading the file:', error.message);
   }
   }
+  const handleUpload = async () => {
+    if (fileInputRef.current && fileInputRef.current.files.length > 0) {
+      const file = fileInputRef.current.files[0];
   
+    
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('driveId', params.driveId);
+  
+      try {
+        await axios.post('http://localhost:3000/upload-file', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
+  }
+  
+
     const FetchData=async()=>{
       const pageToken=null;
        const response=await axios.get('http://localhost:3000/fetch-drive',{headers:{gmail_id:params.driveId}, params: {
@@ -76,6 +98,22 @@ export default function DriveId({params}){
     return(
         <>
         <Navbar/>
+        <div>
+        <div>
+      <label
+        htmlFor="file-upload"
+        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:from-blue-600 hover:to-purple-700 transition-colors duration-300 cursor-pointer"
+      >
+        Upload File
+        <input
+          id="file-upload"
+          type="file"
+          ref={fileInputRef}
+          onChange={handleUpload}
+          className="sr-only" 
+        />
+      </label>
+    </div>
         <div className="col-span-4 p-4 overflow-y-auto">
         {Object.entries(files).map(
           ([category, items]) =>
@@ -139,6 +177,7 @@ export default function DriveId({params}){
               </div>
             )
         )}
+      </div>
       </div>
       </>
     )

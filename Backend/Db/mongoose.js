@@ -1,5 +1,8 @@
 import { MongoClient }  from 'mongodb'
 import mongoose from 'mongoose';
+import { configDotenv } from 'dotenv';
+
+configDotenv();
 
 const mongoURI=process.env.DB_URI
 const client = new MongoClient(mongoURI, { serverSelectionTimeoutMS: 60000,

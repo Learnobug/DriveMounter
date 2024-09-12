@@ -1,3 +1,4 @@
+
 import mongoose from 'mongoose';
 
 // Define the User Schema
@@ -30,6 +31,10 @@ const userSchema = new mongoose.Schema({
   access_token: {
     type: mongoose.Schema.Types.Mixed,
     required: true
+  },
+  Storage:{
+    type:String,
+    required:true
   }
 });
 

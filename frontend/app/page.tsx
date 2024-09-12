@@ -10,11 +10,25 @@ import { icons } from '../app/lib/icons';
 export default function Home() {
   const { user } = useUser();
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
-
+  const [accounts, setAccounts] = useState<any[]>([]); 
+  
   const toggleMenu = (index: any) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   };
 
+  const Get_accounts = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/get-accounts', {
+        headers: {
+          user_id: user?.id
+        }
+      });
+      console.log(response.data);
+      setAccounts(response.data.Accounts);
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+    }
+  }
   async function deleteFile(fileId) {
     try {
       const userId = user?.id;
@@ -56,6 +70,7 @@ export default function Home() {
 
   const { files, loading, nextPageToken, fetchFiles } = useFiles();
 
+
   useEffect(() => {
     if (loading) {
       console.log('Loading files...');
@@ -72,6 +87,7 @@ export default function Home() {
 
   const handleClick = async () => {
     try {
+      await Get_accounts();
       await fetchFiles();
     } catch (error) {
       console.error("Error fetching files:", error);
@@ -88,13 +104,23 @@ export default function Home() {
               <h2 className="text-2xl py-6 font-bold font-mono dark:text-[#040404]">
                 My Drives
               </h2>
-              <div className="flex flex-col py-3 border-b-4 border-[#333]">
+              <div className="flex flex-col py-3 ">
                 <button
                   onClick={handleClick}
                   className="flex text-lg font-mono items-center gap-3 bg-[#333] dark:bg-[#333] text-[#fff] dark:text-[#fff] px-2 py-2 rounded-md"
                 >
                   All Drives
                 </button>
+                {accounts.map((account) => (
+              <Link prefetch={true} href={`/${account.gmail_id}`} key={account.id} className=" flex  block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                <img src={account.picture} alt={account.name} className="w-8 h-8 rounded-full mr-2" />
+                <span>{account.name}</span>
+                <div className="flex flex-col gap-2 p-1">
+                <div className="gap-2">{account.Storage}GB/15GB</div>
+                <div>{((Number(account.Storage) / 15) * 100).toFixed(2)}% Used</div>
+                </div>
+              </Link>
+            ))}
               </div>
             </div>
           </div>

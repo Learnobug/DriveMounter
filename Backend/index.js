@@ -4,16 +4,19 @@ import cors from 'cors';
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser';
 import axios from 'axios';
+import fs from 'fs'
 import { redis } from './Db/redis.js';
+import multer from 'multer'
 import { User } from './models/User.js';
 import { connectToDatabase } from './Db/mongoose.js';
-
-
+import { configDotenv } from 'dotenv';
+import { setKeyWithDefaultExpiry } from './Db/redis.js';
+configDotenv();
 const app = express();
 app.use(cors());
 
+app.use(express.json({ limit: '50mb' })); 
 
-app.use(bodyParser.json());
 app.use(cookieParser());
 
 connectToDatabase();
@@ -29,6 +32,8 @@ const CLIENT_ID = process.env.CLIENT_ID
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = process.env.REDIRECT_URI
 // const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile'];
+
+const upload = multer({ dest: 'uploads/' });
 
 async function getUserInfo(accessToken) {
   try {
@@ -82,6 +87,21 @@ app.get('/oauth2callback', async (req, res) => {
     {
       res.redirect('http://localhost:3001');
     }
+    
+    const storage=await getDriveStorageDetails(tokens)
+    const storageQuota = storage.storageQuota;
+
+    // Convert bytes to GB
+    const bytesToGB = (bytes) => (parseInt(bytes) / (1024 ** 3)).toFixed(4); 
+    
+    const totalGB = bytesToGB(storageQuota.limit);
+    const usedGB = bytesToGB(storageQuota.usage).toFixed(2);
+    const usedInDriveGB = bytesToGB(storageQuota.usageInDrive);
+    
+    // Calculate percentage used
+    const percentageUsed = ((usedGB / totalGB) * 100).toFixed(2);
+    
+  
     const newuser= await User.create({
       Admin_id: id,
       gmail_id:userinfo.id,
@@ -89,7 +109,8 @@ app.get('/oauth2callback', async (req, res) => {
       given_name:userinfo.given_name,
       last_name:userinfo.family_name,
       picture:userinfo.picture,
-      access_token:tokens
+      access_token:tokens,
+      Storage:usedGB
     })
     await newuser.save();
     // res.send('Google Drive connected successfully!');
@@ -123,7 +144,7 @@ app.get('/fetch-files', async (req, res) => {
 
     for (const tokens of userTokens) {
       const { files, nextPageToken } = await fetchFilesWithPagination(tokens, pageSize, pageToken);
-      console.log(files);
+      // console.log(files);
       allFiles = allFiles.concat(files);
 
       if (nextPageToken) {
@@ -131,13 +152,29 @@ app.get('/fetch-files', async (req, res) => {
         return;
       }
     }
-    await redis.set(key,JSON.stringify({ files: allFiles, nextPageToken: null }))
+    await setKeyWithDefaultExpiry(key,JSON.stringify({ files: allFiles, nextPageToken: null }))
     res.json({ files: allFiles, nextPageToken: null });
   } catch (error) {
     console.error('Error fetching all files:', error);
     res.status(500).send('Error fetching all files.');
   }
 });
+
+async function getDriveStorageDetails(tokens) {
+
+  oauth2Client.setCredentials(tokens);
+
+  const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+  try {
+    const response = await drive.about.get({ fields: 'storageQuota' });
+  
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching storage details:', error);
+    throw error;
+  }
+}
 
 async function fetchFilesWithPagination(tokens, pageSize, pageToken) {
   try {
@@ -160,7 +197,7 @@ async function fetchFilesWithPagination(tokens, pageSize, pageToken) {
 
 
 
-async function UplaodFile(tokens) {
+async function UplaodFile(file,tokens) {
   if (!tokens) {
     console.error('No tokens available.');
     return;
@@ -171,29 +208,58 @@ async function UplaodFile(tokens) {
 
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-
+    const filePath = file.path; 
+    const fileMetadata = {
+      name: file.name,
+      mimeType: file.mimetype
+    };
+    const media = {
+      mimeType: file.mimetype,
+      body: fs.createReadStream(filePath) 
+    };
+    
     const res = await drive.files.create({
-      requestBody: {
-        name: 'Test',
-        mimeType: 'text/plain'
-      },
-      media: {
-        mimeType: 'text/plain',
-        body: 'Hello World'
-      }
+      requestBody: fileMetadata,
+      media: media,
+      fields: 'id'
     });
-
     console.log('File Created:', res.data);
+
   } catch (e) {
     console.error('Error creating file:', e);
   }
 }
 
+app.post('/upload-file', upload.single('file'), async (req, res) => {
+  const { driveId } = req.body;
+  const file = req.file; 
+
+  console.log('hey', req.body);
+  console.log('file', file);
+
+  const user = await User.findOne({ gmail_id: driveId });
+  if (!user) {
+    return res.json({ msg: 'User does not exist' });
+  }
+
+  const token = user.access_token;
+  await UplaodFile(file,token);
+  const storage=await getDriveStorageDetails(token);
+  const storageQuota = storage.storageQuota;
+
+  const bytesToGB = (bytes) => (parseInt(bytes) / (1024 ** 3)).toFixed(4); 
+    const usedGB = bytesToGB(storageQuota.usage).toFixed(2);
+    user.Storage=usedGB;
+    await user.save();
+
+  res.json({ msg: 'File uploaded successfully' });
+});
+
 app.get('/fetch-drive',async(req,res)=>{
   const gmail_id=req.headers['gmail_id'];
   const usertoken=[];
   
-  cached= await redis.get(gmail_id);
+ const cached= await redis.get(gmail_id);
   if(cached)
   {
     return res.send(gmail_id);
@@ -205,7 +271,7 @@ app.get('/fetch-drive',async(req,res)=>{
 
     do{
       const { files, nextPageToken } = await fetchFilesWithPagination(user.access_token, pageSize, pageToken);
-      console.log(files);
+      // console.log(files);
       allFiles = allFiles.concat(files);
 
       if (nextPageToken) {
@@ -215,7 +281,7 @@ app.get('/fetch-drive',async(req,res)=>{
       pageToken=nextPageToken;
     }while(pageToken)
 
-  await redis.set(gmail_id,JSON.stringify({'files':allFiles}))
+  await setKeyWithDefaultExpiry(gmail_id,JSON.stringify({'files':allFiles}))
   res.json({'files':allFiles});
 })
 
@@ -224,15 +290,16 @@ app.get('/fetch-drive',async(req,res)=>{
 app.get('/get-accounts', async (req, res) => {
   const userid = req.headers['user_id'];
     const key=`${userid}account`
-    const cached=await redis.get(key);
-    if(cached)
-    {
-       return res.send(cached)
-    }
+    // const cached=await redis.get(key);
+    // if(cached)
+    // {
+    //    return res.send(cached)
+    // }
 
   try {
       const response = await User.find({ Admin_id: userid });
-      await redis.set(key,JSON.stringify({
+      console.log(response);
+      await setKeyWithDefaultExpiry(key,JSON.stringify({
         "Accounts": response
     }))
       res.json({
@@ -297,7 +364,7 @@ app.delete('/delete-file', async (req, res) => {
     oauth2Client.setCredentials(user.access_token);
 
     const drive = google.drive({ version: 'v2', auth: oauth2Client });
-    console.log(fileId)
+    // console.log(fileId)
     await drive.files.delete({ fileId: fileId });
 
     res.status(200).send(`File with ID ${fileId} has been deleted successfully.`);
