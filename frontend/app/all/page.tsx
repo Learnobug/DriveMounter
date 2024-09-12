@@ -1,0 +1,265 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  ChevronRight,
+  Folder,
+  Image as ImageIcon,
+  File,
+  MoreVertical,
+  Search,
+} from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import axios from "axios";
+import { useFiles } from "../context/FileContext";
+import { icons } from "../lib/icons";
+import Link from "next/link";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+const fileTypes = ["image", "document", "folder", "audio", "video", "others"];
+
+export default function EnhancedDriveMounter() {
+  const [selectedDrive, setSelectedDrive] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const { user } = useUser();
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
+
+  const { files, loading, nextPageToken, fetchFiles } = useFiles();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log("Called");
+      await Get_accounts();
+      await fetchFiles();
+    };
+    fetchData();
+  }, [user]);
+
+  useEffect(() => {
+    if (loading) {
+      console.log("Loading files...");
+    } else {
+      console.log("Files:", files);
+    }
+  }, [loading, files]);
+
+  const Get_accounts = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/get-accounts", {
+        headers: {
+          user_id: user?.id,
+        },
+      });
+      console.log(response.data);
+      setAccounts(response.data.Accounts);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+    }
+  };
+
+  const handleClick = async () => {
+    const response = await axios.get("http://localhost:3000/auth", {
+      headers: {
+        user_id: user?.id,
+      },
+    });
+    window.location.href = response.data.authUrl;
+  };
+
+  const toggleMenu = (index: any) => {
+    setOpenMenuIndex(openMenuIndex === index ? null : index);
+  };
+
+  async function downloadFile(fileId: any) {
+    try {
+      const userId = user?.id;
+      const response = await axios.get("http://localhost:3000/download-file", {
+        params: { fileId, userId },
+        responseType: "blob",
+      });
+      const contentDisposition = response.headers["content-disposition"];
+      const fileName = contentDisposition
+        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+        : "downloaded_file";
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      console.log(`File downloaded successfully: ${fileName}`);
+    } catch (error) {
+      console.error("Error downloading the file:", error.message);
+    }
+  }
+
+  async function deleteFile(fileId: any) {
+    try {
+      const userId = user?.id;
+      const response = await axios.delete("http://localhost:3000/delete-file", {
+        params: { fileId, userId },
+      });
+      console.log(response.data);
+    } catch (error) {
+      console.error("Error deleting the file:", error.message);
+    }
+  }
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r">
+        <div className="p-4">
+          <h1 className="text-2xl font-bold">Drive Mounter</h1>
+        </div>
+        <nav className="mt-6">
+          <a
+            href="#"
+            className="block px-4 py-2 text-sm font-medium text-gray-700"
+          >
+            Dashboard
+          </a>
+          <a
+            href="#"
+            className="block px-4 py-2 text-sm font-medium text-gray-700"
+          >
+            My Drives
+          </a>
+          <a
+            href="#"
+            className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+          >
+            All Drives
+          </a>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div className="flex items-center">
+              <Select value={selectedDrive} onValueChange={setSelectedDrive}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Drives" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((drive) => (
+                    <SelectItem key={drive.id} value={drive}>
+                      {drive.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleClick}>Connect account</Button>
+          </div>
+        </header>
+
+        {/* Search Bar */}
+        <div className="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search files and folders"
+              className="pl-10 pr-4 py-2 w-full bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* File Browser */}
+        <div className="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+          <Tabs defaultValue="image" className="w-full">
+            <TabsList>
+              {fileTypes.map((type) => (
+                <TabsTrigger key={type} value={type}>
+                  {type}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {fileTypes.map((type) => (
+              <TabsContent key={type} value={type}>
+                <ScrollArea className="h-[calc(100vh-220px)]">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {files[type]
+                      .filter((file: any) =>
+                        file.name
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                      )
+                      .map((file: any, index: number) => (
+                        <Card
+                          key={index}
+                          className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
+                        >
+                          <CardContent className="p-4 flex flex-col items-center justify-center">
+                            {icons[type as keyof typeof icons]}
+                            <p className="mt-2 text-sm text-center truncate w-full">
+                              {file.name}
+                            </p>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="relative left-16 bottom-20"
+                                  onClick={() => toggleMenu(file.id)}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="relative left-20 bottom-10 z-10">
+                                <DropdownMenuItem
+                                  onClick={() => downloadFile(file.id)}
+                                >
+                                  Download
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => deleteFile(file.id)}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                  <a
+                                    href={file.webViewLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    View
+                                  </a>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </main>
+    </div>
+  );
+}
