@@ -1,184 +1,318 @@
-"use client"
-import axios from "axios"
-import { useEffect,useState,useRef } from "react";
+"use client";
+import React, { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  ChevronRight,
+  Folder,
+  Image as ImageIcon,
+  File,
+  MoreVertical,
+  Search,
+} from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import axios from "axios";
+import { categorizeFiles, icons } from "../lib/icons";
 import Link from "next/link";
-import Navbar from "../components/Navbar";
-import {categorizeFiles,icons} from '../lib/icons'
-export default function DriveId({params}){
-    const [files, setFiles] = useState({
-        images: [],
-        videos: [],
-        audio: [],
-        documents: [],
-        folders: [],
-        others: [],
-      });
-      const fileInputRef = useRef(null);
-      const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-      const toggleMenu = (index: any) => {
-        setOpenMenuIndex(openMenuIndex === index ? null : index);
-      };
-    
-  async function deleteFile(fileId) {
+const fileTypes = ["image", "document", "folder", "audio", "video", "others"];
+
+export default function DriveId({ params }: { params: any }) {
+  const [selectedDrive, setSelectedDrive] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useUser();
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [files, setFiles] = useState({
+    image: [],
+    video: [],
+    audio: [],
+    document: [],
+    folder: [],
+    others: [],
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
+
+  const toggleMenu = (index: any) => {
+    setOpenMenuIndex(openMenuIndex === index ? null : index);
+  };
+
+  const Get_accounts = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/get-accounts", {
+        headers: {
+          user_id: user?.id,
+        },
+      });
+      console.log(response.data);
+      setAccounts(response.data.Accounts);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+    }
+  };
+
+  async function deleteFile(fileId:any) {
     const userId = user?.id;
-    const response = await axios.delete('http://localhost:3000/delete-file', {
+    const response = await axios.delete("http://localhost:3000/delete-file", {
       params: { fileId, userId },
     });
     console.log(response.data);
-
   }
 
-  async function downloadFile(fileId) {
+  async function downloadFile(fileId:any) {
     try {
       const userId = user?.id;
-      console.log('file', fileId);
-      const response = await axios.get('http://localhost:3000/download-file', {
+      console.log("file", fileId);
+      const response = await axios.get("http://localhost:3000/download-file", {
         params: { fileId, userId },
-        responseType: 'blob' // Change responseType to 'blob'
+        responseType: "blob",
       });
-  
-      const contentDisposition = response.headers['content-disposition'];
+
+      const contentDisposition = response.headers["content-disposition"];
       const fileName = contentDisposition
-        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
-        : 'downloaded_file';
-  
+        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+        : "downloaded_file";
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', fileName);
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
-  
+
       console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
-      console.error('Error downloading the file:', error.message);
-  }
-  }
-  const handleUpload = async () => {
-    if (fileInputRef.current && fileInputRef.current.files.length > 0) {
-      const file = fileInputRef.current.files[0];
-  
-    
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('driveId', params.driveId);
-  
-      try {
-        await axios.post('http://localhost:3000/upload-file', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      } catch (error) {
-        console.error('Error uploading file:', error);
+      if (error instanceof Error) {
+        console.error("Error downloading the file:", error.message);
+      } else {
+        console.error("Error downloading the file:", error);
       }
     }
   }
-  
 
-    const FetchData=async()=>{
-      const pageToken=null;
-       const response=await axios.get('http://localhost:3000/fetch-drive',{headers:{gmail_id:params.driveId}, params: {
-        pageSize: 100,
-        pageToken: pageToken
-      }},);
-       const { files: fetchedFiles } = response.data;
-       console.log(fetchedFiles);
- 
-       const categorizedFiles = categorizeFiles(fetchedFiles);
-       setFiles(categorizedFiles);
+  const handleUpload = async () => {
+    if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files.length > 0) {
+      const files = fileInputRef.current?.files;
+      if (!files) return;
+      const file = files[0];
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("driveId", params.driveId);
+
+      try {
+        await axios.post("http://localhost:3000/upload-file", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
     }
+  };
 
-    useEffect(()=>{
-     FetchData();
-    },[])
+  const FetchData = async () => {
+    const pageToken = null;
+    const response = await axios.get("http://localhost:3000/fetch-drive", {
+      headers: { gmail_id: params.driveId },
+      params: {
+        pageSize: 100,
+        pageToken: pageToken,
+      },
+    });
+    const { files: fetchedFiles } = response.data;
+    console.log(response.data);
+    const categorizedFiles = categorizeFiles(fetchedFiles);
+    setFiles(categorizedFiles);
+  };
 
-    return(
-        <>
-        <Navbar/>
-        <div>
-        <div>
-      <label
-        htmlFor="file-upload"
-        className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:from-blue-600 hover:to-purple-700 transition-colors duration-300 cursor-pointer"
-      >
-        Upload File
-        <input
-          id="file-upload"
-          type="file"
-          ref={fileInputRef}
-          onChange={handleUpload}
-          className="sr-only" 
-        />
-      </label>
-    </div>
-        <div className="col-span-4 p-4 overflow-y-auto">
-        {Object.entries(files).map(
-          ([category, items]) =>
-            items.length > 0 && (
-              <div key={category} className="mb-6">
-                <div className="flex justify-between">
-                  <h3 className="text-xl font-semibold mb-4">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </h3>
-                  <button>Show More -&gt; </button>
-                </div>
-                <ul className="flex gap-10 overflow-hidden">
-                  {items.slice(0, 6).map((file: any, index: number) => (
-                    <div key={file._id}>
-                      <Link
-                        target="blank"
-                        href={file.webViewLink}
-                        key={file.id}
-                        className="mb-2 flex items-center gap-2 h-40 w-40 border flex-wrap justify-center"
-                      >
-                        <div>{icons[category as keyof typeof files]}</div>
-                      </Link>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-wrap w-full">
-                          {file.name}
-                        </span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={1.5}
-                          stroke="currentColor"
-                          className="size-6 cursor-pointer"
-                          onClick={() => toggleMenu(file.id)}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
-                          />
-                        </svg>
-                        {openMenuIndex === file.id && (
-                          <div className="ellipsis-menu">
-                            <ul className="border px-4 py-2 text-xs text-nowrap flex flex-col gap-2 bg-white rounded-md shadow-lg">
-                            <button onClick={()=>{downloadFile(file.id)}} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
-                                  Download
-                                </button>
-                                <button onClick={()=>{deleteFile(file.id)}} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
-                                  Delete
-                                </button >
-                                <Link href={`/${file.webViewLink}`} className="py-1 px-2 hover:bg-gray-100 cursor-pointer">
-                                  View
-                                </Link>
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+  useEffect(() => {
+    Get_accounts();
+    FetchData();
+  }, [user]);
+
+  const handleClick = async () => {
+    const response = await axios.get("http://localhost:3000/auth", {
+      headers: {
+        user_id: user?.id,
+      },
+    });
+    window.location.href = response.data.authUrl;
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className="w-64 bg-white border-r">
+        <div className="p-4">
+          <h1 className="text-2xl font-bold">Drive Mounter</h1>
+        </div>
+        <nav className="mt-6">
+          <Link
+            href="/dashboard"
+            className="block px-4 py-2 text-sm font-medium text-gray-700"
+          >
+            Dashboard
+          </Link>
+          <Link
+            href="/all"
+            className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+          >
+            All Drives
+          </Link>
+          {accounts.map((drive) => (
+            <Link
+              className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              key={drive.gmail_id}
+              href={`${drive.gmail_id}`}
+            >
+              {drive.name}
+            </Link>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div className="flex items-center">
+              <Select value={selectedDrive} onValueChange={setSelectedDrive}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All Drives" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((drive) => (
+                    <SelectItem key={drive.id} value={drive}>
+                      {drive.name}
+                    </SelectItem>
                   ))}
-                </ul>
-              </div>
-            )
-        )}
-      </div>
-      </div>
-      </>
-    )
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleClick}>Connect account</Button>
+          </div>
+        </header>
+
+        {/* Search Bar */}
+        <div className="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search files and folders"
+              className="pl-10 pr-4 py-2 w-full bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* File Browser */}
+        <div className="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
+          <Tabs defaultValue="image" className="w-full">
+            <TabsList>
+              {fileTypes.map((type) => (
+                <TabsTrigger key={type} value={type}>
+                  {type}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {fileTypes.map((type) => (
+              <TabsContent key={type} value={type}>
+                <ScrollArea className="h-[calc(100vh-220px)]">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {files[type as keyof typeof files]?.length > 0 &&
+                      files[type as keyof typeof files]
+                        .filter((file: any) =>
+                          file.name
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                        )
+                        .slice(0, 15)
+                        .map((file: any, index: number) => (
+                          <Card
+                            key={index}
+                            className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
+                          >
+                            <CardContent className="p-4 flex flex-col items-center justify-center">
+                              {icons[type as keyof typeof icons]}
+                              <p className="mt-2 text-sm text-center truncate w-full">
+                                {file.name}
+                              </p>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="relative left-16 bottom-20"
+                                    onClick={() => toggleMenu(file.id)}
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="relative left-20 bottom-10 z-10">
+                                  <DropdownMenuItem
+                                    onClick={() => downloadFile(file.id)}
+                                  >
+                                    Download
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => deleteFile(file.id)}
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild>
+                                    <a
+                                      href={file.webViewLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      View
+                                    </a>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    <Card className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden">
+                      <Link href={`/show/${type}`}>
+                        <CardContent className="p-4 flex flex-col items-center justify-center">
+                          <ChevronRight className="h-8 w-8" />
+                          <p className="mt-2 text-sm text-center truncate w-full">
+                            Show All
+                          </p>
+                        </CardContent>
+                      </Link>
+                    </Card>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </main>
+    </div>
+  );
 }

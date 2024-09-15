@@ -30,6 +30,7 @@ export const icons= {
       others: [],
     };
 
+
     data.forEach((file) => {
       const type = file.mimeType;
       if (type.includes("image")) categorized.image.push(file);

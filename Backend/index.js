@@ -27,12 +27,12 @@ connectToDatabase();
 
 
 
-const CLIENT_ID = process.env.CLIENT_ID
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI
+const CLIENT_ID = "394660286643-a6ljdkjphlbipk6cegvu9lp62bc57hbb.apps.googleusercontent.com"
+const CLIENT_SECRET = "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"
+const REDIRECT_URI = "http://localhost:3000/oauth2callback"
 const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive.file', 
   'https://www.googleapis.com/auth/userinfo.profile', 
-  'https://www.googleapis.com/auth/userinfo.email'   ]
+  'https://www.googleapis.com/auth/userinfo.email'   ]
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -263,15 +263,15 @@ app.post('/upload-file', upload.single('file'), async (req, res) => {
 app.get('/fetch-drive',async(req,res)=>{
   const gmail_id=req.headers['gmail_id'];
   const usertoken=[];
-  
  const cached= await redis.get(gmail_id);
   if(cached)
   {
-    return res.send(gmail_id);
+    console.log(cached);
+    return res.send(JSON.parse(cached));
   }
   const user=await User.findOne({gmail_id:gmail_id});
   const pageSize = parseInt(req.query.pageSize) || 10; 
-  const pageToken = req.query.pageToken || null; 
+  let pageToken = req.query.pageToken || null; 
   let allFiles = [];
 
     do{
