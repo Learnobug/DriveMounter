@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Image,
+  Image as Images,
   MoreVertical,
   Search,
   Upload,
@@ -36,6 +36,7 @@ import { useFiles } from "@/app/context/FileContext";
 import axios from "axios";
 import { categorizeCategory } from "@/app/lib/icons";
 import Link from "next/link";
+import Image from "next/image";
 
 const driveOptions = ["Google Drive", "Dropbox", "OneDrive", "iCloud"];
 
@@ -340,7 +341,12 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
                         }`}
                       >
                         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
-                          <Image className="h-8 w-8 text-gray-400" />
+                          { file.thumbnailLink ? (
+                            <Image className="border aspect-square" src={file.thumbnailLink} height={200} width={200} alt="" />
+                          ) : (
+                            <Images className="h-8 w-8 text-gray-400" />
+                          )
+                          }
                         </div>
                       </div>
                       <div

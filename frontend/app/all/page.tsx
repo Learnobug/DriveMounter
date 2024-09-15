@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,9 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ChevronRight,
-  Folder,
-  Image as ImageIcon,
-  File,
   MoreVertical,
   Search,
 } from "lucide-react";
@@ -203,8 +199,8 @@ export default function EnhancedDriveMounter() {
         <div className="max-w-7xl mx-auto mt-4 px-4 sm:px-6 lg:px-8">
           <Tabs defaultValue="image" className="w-full">
             <TabsList>
-              {fileTypes.map((type) => (
-                <TabsTrigger key={type} value={type}>
+              {fileTypes.map((type,index) => (
+                <TabsTrigger key={index} value={type}>
                   {type}
                 </TabsTrigger>
               ))}
