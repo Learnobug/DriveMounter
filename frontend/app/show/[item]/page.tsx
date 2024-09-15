@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -32,13 +31,11 @@ import {
   List,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
-import { useFiles } from "@/app/context/FileContext";
 import axios from "axios";
 import { categorizeCategory } from "@/app/lib/icons";
 import Link from "next/link";
 import Image from "next/image";
 
-const driveOptions = ["Google Drive", "Dropbox", "OneDrive", "iCloud"];
 
 const imageFiles = Array.from({ length: 24 }, (_, i) => ({
   id: i + 1,
@@ -85,7 +82,6 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     folder: [],
     others: [],
   });
-  console.log("files", files);
 
   const Get_accounts = async () => {
     try {
@@ -94,7 +90,6 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
           user_id: user?.id,
         },
       });
-      console.log(response.data);
       setAccounts(response.data.Accounts);
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -102,7 +97,6 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
   };
 
   const fetchFiles = async (nextPageToken: any) => {
-    console.log(pageToken);
     setLoading(true);
     try {
       const response = await axios.get("http://localhost:3000/fetch-files", {
@@ -133,12 +127,10 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
       ...prevFiles,
       [item]: [...((prevFiles[item] as any[]) || []), ...newFiles],
     }));
-    console.log("called2", files);
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("Called");
       await Get_accounts();
     };
     fetchData();
@@ -194,7 +186,6 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
       link.click();
       link.remove();
 
-      console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
       if (error instanceof Error) {
         console.error("Error downloading the file:", error.message);
@@ -210,7 +201,6 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
       const response = await axios.delete("http://localhost:3000/delete-file", {
         params: { fileId, userId },
       });
-      console.log(response.data);
     } catch (error) {
       console.error("Error deleting the file:", (error as Error).message);
     }
@@ -228,7 +218,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     <div className="flex flex-col h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 sm:flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <Link href={'/dashboard'} className="text-2xl font-bold">Drive Mounter</Link>
             <Select value={selectedDrive} onValueChange={setSelectedDrive}>
@@ -237,7 +227,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
               </SelectTrigger>
               <SelectContent>
                 {accounts.map((drive) => (
-                  <SelectItem key={drive} value={drive}>
+                  <SelectItem key={drive.gmail_id} value={drive}>
                     {drive.name}
                   </SelectItem>
                 ))}
@@ -252,9 +242,8 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
       <main className="flex-1 overflow-y-auto">
         {/* Toolbar */}
         <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:flex space-y-2 justify-between items-center">
             <div className="flex items-center space-x-4">
-              <h2 className="text-xl font-semibold">Images</h2>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
@@ -321,9 +310,8 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
               }`}
             >
               {filteredFiles.map((file) => (
-                <Link href={file.webViewLink}>
+                <Link key={file.id} href={file.webViewLink}>
                   <Card
-                    key={file.id}
                     className={`overflow-hidden ${
                       viewMode === "list" ? "flex items-center" : ""
                     }`}
@@ -342,7 +330,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
                       >
                         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded">
                           { file.thumbnailLink ? (
-                            <Image className="border aspect-square" src={file.thumbnailLink} height={200} width={200} alt="" />
+                            <Image layout="responsive" className="border aspect-square" src={file.thumbnailLink} height={200} width={200} alt="" />
                           ) : (
                             <Images className="h-8 w-8 text-gray-400" />
                           )

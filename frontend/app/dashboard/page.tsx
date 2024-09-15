@@ -3,28 +3,16 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
   HardDrive,
   Plus,
   User,
   Home,
-  Settings,
-  HelpCircle,
-  LogOut,
   MemoryStick,
 } from "lucide-react";
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import Image from "next/image";
 
 
 
@@ -36,7 +24,6 @@ export default function DriveMounter() {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("Called");
       await Get_accounts();
     };
     fetchData();
@@ -51,7 +38,6 @@ export default function DriveMounter() {
           user_id: user?.id,
         },
       });
-      console.log(response.data);
       setAccounts(response.data.Accounts);
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -97,16 +83,18 @@ export default function DriveMounter() {
             <MemoryStick className="mr-3" />
             All Drives
           </Link>
-          {accounts.map((account) => (
+          {accounts.map((account, index) => (
             <Link
-              key={account.id}
+              key={index}
               href={`/${account.gmail_id}`}
               className="flex items-center px-4 py-2 mt-2 text-gray-600 hover:bg-gray-200"
             >
-              <img
+              <Image
                 src={account.picture}
                 alt={account.name}
-                className="w-8 h-8 rounded-full mr-2"
+                height={20}
+                width={20}
+                className="w-6 h-6 rounded-full mr-2"
               />
               {account.name}
             </Link>
@@ -125,9 +113,9 @@ export default function DriveMounter() {
 
         {/* Drive Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {accounts.map((drive) => (
-            <Link prefetch={true} href={`/${drive.gmail_id}`} key={drive.id} className="">
-            <Card key={drive.id}>
+          {accounts.map((drive,index) => (
+            <Link prefetch={true} href={`/${drive.gmail_id}`} key={index} className="">
+            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {drive.name}

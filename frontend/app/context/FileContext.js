@@ -1,25 +1,32 @@
-"use client"
-import React, { createContext, useState, useContext,useEffect } from 'react';
+"use client";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
-import {categorizeFiles} from '../lib/icons'
-import axios from 'axios';
+import { categorizeFiles } from "../lib/icons";
+import axios from "axios";
+
+
 
 const FilesContext = createContext();
 
+
+
+
 export const FilesProvider = ({ children }) => {
-    const { user } = useUser();
-    const [nextPageToken, setNextPageToken] = useState(null);
-    const [files, setFiles] = useState({
-      image: [],
-      video: [],
-      audio: [],
-      document: [],
-      folder: [],
-      others: [],
-    });
+  const { user } = useUser();
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [files, setFiles] = useState({
+    image: [],
+    video: [],
+    audio: [],
+    document: [],
+    folder: [],
+    others: [],
+  });
   const [loading, setLoading] = useState(false);
+
+  
   const addFiles = (newFiles) => {
-    setFiles(prevFiles => ({
+    setFiles((prevFiles) => ({
       image: [...prevFiles.image, ...(newFiles.image || [])],
       video: [...prevFiles.video, ...(newFiles.video || [])],
       audio: [...prevFiles.audio, ...(newFiles.audio || [])],
@@ -27,43 +34,38 @@ export const FilesProvider = ({ children }) => {
       folder: [...prevFiles.folder, ...(newFiles.folder || [])],
       others: [...prevFiles.others, ...(newFiles.others || [])],
     }));
-    console.log('called2',files);
   };
 
-  useEffect(() => {
-    console.log('Updated files:', files);
-  }, [addFiles]);
-  
   const fetchFiles = async (pageSize = 100, pageToken = null) => {
-    console.log("called2")
+    if (!user) {
+      return;
+    }
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3000/fetch-files', {
+      const response = await axios.get("http://localhost:3000/fetch-files", {
         headers: {
-          'user_id': user.id
+          user_id: user.id,
         },
         params: {
           pageSize: pageSize,
-          pageToken: pageToken
-        }
+          pageToken: pageToken,
+        },
       });
-      console.log(response.data);
-        const { files: fetchedFiles,nextPageToken } = response.data;
-          const categorizedFiles = categorizeFiles(fetchedFiles);
-          addFiles(categorizedFiles);
-          console.log(categorizedFiles);
-          setNextPageToken(nextPageToken);
-          console.log('Reached here');
+      const { files: fetchedFiles, nextPageToken } = response.data;
+      const categorizedFiles = categorizeFiles(fetchedFiles);
+      addFiles(categorizedFiles);
+      setNextPageToken(nextPageToken);
     } catch (error) {
-      console.error('Error fetching files:', error);
+      console.error("Error fetching files:", error);
     } finally {
-      console.log('here now')
       setLoading(false);
     }
   };
 
   return (
-    <FilesContext.Provider value={{ files, loading,nextPageToken, fetchFiles }}>
+    <FilesContext.Provider
+      value={{ files, loading, nextPageToken, fetchFiles }}
+    >
       {children}
     </FilesContext.Provider>
   );

@@ -29,7 +29,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+
+
 const fileTypes = ["image", "document", "folder", "audio", "video", "others"];
+
+
+
 
 export default function EnhancedDriveMounter() {
   const [selectedDrive, setSelectedDrive] = React.useState("");
@@ -37,25 +42,18 @@ export default function EnhancedDriveMounter() {
   const { user } = useUser();
   const [accounts, setAccounts] = useState<any[]>([]);
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
-
   const { files, loading, nextPageToken, fetchFiles } = useFiles();
+
+
+  
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("Called");
       await Get_accounts();
       await fetchFiles();
     };
     fetchData();
   }, [user]);
-
-  useEffect(() => {
-    if (loading) {
-      console.log("Loading files...");
-    } else {
-      console.log("Files:", files);
-    }
-  }, [loading, files]);
 
   const Get_accounts = async () => {
     try {
@@ -64,7 +62,6 @@ export default function EnhancedDriveMounter() {
           user_id: user?.id,
         },
       });
-      console.log(response.data);
       setAccounts(response.data.Accounts);
     } catch (error) {
       console.error("Error fetching accounts:", error);
@@ -103,8 +100,6 @@ export default function EnhancedDriveMounter() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-      console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
       if (error instanceof Error) {
         console.error("Error downloading the file:", error.message);
@@ -120,7 +115,6 @@ export default function EnhancedDriveMounter() {
       const response = await axios.delete("http://localhost:3000/delete-file", {
         params: { fileId, userId },
       });
-      console.log(response.data);
     } catch (error) {
       console.error("Error deleting the file:", (error as Error).message);
     }
@@ -170,7 +164,7 @@ export default function EnhancedDriveMounter() {
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map((drive) => (
-                    <SelectItem key={drive.id} value={drive}>
+                    <SelectItem key={drive.gmail_id} value={drive}>
                       {drive.name}
                     </SelectItem>
                   ))}
