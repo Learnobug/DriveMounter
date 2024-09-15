@@ -6,8 +6,10 @@ import { useUser } from "@clerk/clerk-react";
 import Link from "next/link";
 import { useFiles } from '../app/context/FileContext';
 import { icons } from '../app/lib/icons';
+import { redirect } from "next/navigation";
 
 export default function Home() {
+  return redirect('/dashboard');
   const { user } = useUser();
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]); 

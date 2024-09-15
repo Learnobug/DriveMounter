@@ -10,7 +10,7 @@ import {
   MemoryStick,
 } from "lucide-react";
 import axios from "axios";
-import { useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -107,7 +107,8 @@ export default function DriveMounter() {
         <header className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-gray-800">My Drives</h2>
           <Button variant="ghost" size="icon">
-            <User className="h-6 w-6" />
+            <UserButton />
+            {/* <User className="h-6 w-6" /> */}
           </Button>
         </header>
 
