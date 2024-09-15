@@ -6,12 +6,27 @@ import Navbar from "../../components/Navbar";
 import { categorizeCategory, icons } from '../../lib/icons';
 import { useUser } from "@clerk/clerk-react";
 
-export default function Showmore({ params }) {
+type FileCategory = 'image' | 'video' | 'audio' | 'document' | 'folder' | 'others';
+
+export default function Showmore({ params }:{params:{item: FileCategory}}) {
   const { user } = useUser();
   const id = user?.id;
   const item = params.item;
   
-  const [files, setFiles] = useState({
+  type File = {
+    _id: string;
+    name: string;
+    webViewLink: string;
+  };
+  
+  const [files, setFiles] = useState<{
+    image: File[];
+    video: File[];
+    audio: File[];
+    document: File[];
+    folder: File[];
+    others: File[];
+  }>({
     image: [],
     video: [],
     audio: [],
@@ -25,9 +40,8 @@ export default function Showmore({ params }) {
   const [loadmore,setloadmore]=useState(true);
   const toggleMenu = (index: any) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
-  };
-
-  async function deleteFile(fileId) {
+  }
+  async function deleteFile(fileId: any) {
     try {
       const response = await axios.delete('http://localhost:3000/delete-file', {
         params: { fileId, userId: id },
@@ -39,11 +53,11 @@ export default function Showmore({ params }) {
         [item]: prevFiles[item].filter(file => file._id !== fileId)
       }));
     } catch (error) {
-      console.error('Error deleting the file:', error.message);
+      console.error('Error deleting the file:', (error as Error).message);
     }
   }
 
-  async function downloadFile(fileId) {
+  async function downloadFile(fileId:any) {
     try {
       const response = await axios.get('http://localhost:3000/download-file', {
         params: { fileId, userId: id },
@@ -65,10 +79,10 @@ export default function Showmore({ params }) {
       
       console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
-      console.error('Error downloading the file:', error.message);
+      console.error('Error downloading the file:', (error as Error).message);
     }
   }
-  const addFiles = (newFiles) => {
+  const addFiles = (newFiles:any) => {
     setFiles(prevFiles => ({
       ...prevFiles,
       [item]: [...prevFiles[item], ...newFiles],
@@ -76,7 +90,7 @@ export default function Showmore({ params }) {
     console.log('called2', files);
   };
   
-  const fetchFiles = async (nextPageToken) => {
+  const fetchFiles = async (nextPageToken:any) => {
     console.log(pageToken)
     setLoading(true);
     try {

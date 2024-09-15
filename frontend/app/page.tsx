@@ -29,7 +29,7 @@ export default function Home() {
       console.error('Error fetching accounts:', error);
     }
   }
-  async function deleteFile(fileId) {
+  async function deleteFile(fileId:any) {
     try {
       const userId = user?.id;
       const response = await axios.delete('http://localhost:3000/delete-file', {
@@ -37,11 +37,15 @@ export default function Home() {
       });
       console.log(response.data);
     } catch (error) {
-      console.error('Error deleting the file:', error.message);
+      if (error instanceof Error) {
+        console.error('Error deleting the file:', error.message);
+      } else {
+        console.error('Error deleting the file:', error);
+      }
     }
   }
 
-  async function downloadFile(fileId) {
+  async function downloadFile(fileId:any) {
     try {
       const userId = user?.id;
       const response = await axios.get('http://localhost:3000/download-file', {
@@ -63,7 +67,11 @@ export default function Home() {
   
       console.log(`File downloaded successfully: ${fileName}`);
     } catch (error) {
-      console.error('Error downloading the file:', error.message);
+      if (error instanceof Error) {
+        console.error('Error downloading the file:', error.message);
+      } else {
+        console.error('Error downloading the file:', error);
+      }
     }
   }
 
@@ -124,8 +132,8 @@ export default function Home() {
         </div>
         <div className="col-span-4 p-4 overflow-y-auto">
           {Object.entries(files).map(
-            ([category, items]) =>
-              items.length > 0 && (
+            ([category, items]) => 
+              (items as any[]).length > 0 && (
                 <div key={category} className="mb-6">
                   <div className="flex justify-between">
                     <h3 className="text-xl font-semibold mb-4">
@@ -134,7 +142,7 @@ export default function Home() {
                     <Link prefetch={true} href={`/show-more/${category}`}>Show More -&gt; </Link>
                   </div>
                   <ul className="flex gap-10 overflow-hidden">
-                    {items.slice(0, 6).map((file: any, index: number) => (
+                    {(items as any[]).slice(0, 6).map((file: any, index: number) => (
                       <div key={file._id}>
                         <Link
                           target="blank"

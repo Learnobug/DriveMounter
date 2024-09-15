@@ -2,10 +2,8 @@
 
 import { clerkMiddleware } from "@clerk/nextjs/server";
 
-// Ensure you pass an object with publicRoutes defined
-export default clerkMiddleware({
-  publicRoutes: ["/auth"], // Public routes that do not require authentication
-});
+// Ensure you pass the correct options
+export default clerkMiddleware();
 
 // Define the routes or paths where this middleware will be applied
 export const config = {
