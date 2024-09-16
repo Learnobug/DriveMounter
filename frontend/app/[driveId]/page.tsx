@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -15,9 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   ChevronRight,
-  Folder,
-  Image as ImageIcon,
-  File,
   MoreVertical,
   Search,
 } from "lucide-react";
@@ -34,10 +30,12 @@ import {
 
 const fileTypes = ["image", "document", "folder", "audio", "video", "others"];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function DriveId({ params }: { params: any }) {
   const [selectedDrive, setSelectedDrive] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useUser();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]);
   const [files, setFiles] = useState({
     image: [],
@@ -48,9 +46,9 @@ export default function DriveId({ params }: { params: any }) {
     others: [],
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
+  const [openMenuIndex, setOpenMenuIndex] = useState<string | null>(null);
 
-  const toggleMenu = (index: any) => {
+  const toggleMenu = (index: string) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   };
 
@@ -68,7 +66,7 @@ export default function DriveId({ params }: { params: any }) {
     }
   };
 
-  async function deleteFile(fileId:any) {
+  async function deleteFile(fileId:string) {
     const userId = user?.id;
     const response = await axios.delete("http://localhost:3000/delete-file", {
       params: { fileId, userId },
@@ -76,7 +74,7 @@ export default function DriveId({ params }: { params: any }) {
     console.log(response.data);
   }
 
-  async function downloadFile(fileId:any) {
+  async function downloadFile(fileId:string) {
     try {
       const userId = user?.id;
       console.log("file", fileId);
@@ -108,6 +106,7 @@ export default function DriveId({ params }: { params: any }) {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleUpload = async () => {
     if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files.length > 0) {
       const files = fileInputRef.current?.files;
@@ -244,13 +243,13 @@ export default function DriveId({ params }: { params: any }) {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {files[type as keyof typeof files]?.length > 0 &&
                       files[type as keyof typeof files]
-                        .filter((file: any) =>
+                        .filter((file: {name:string ,id:number,webViewLink:string}) =>
                           file.name
                             .toLowerCase()
                             .includes(searchQuery.toLowerCase())
                         )
                         .slice(0, 15)
-                        .map((file: any, index: number) => (
+                        .map((file: {name:string, id:string, webViewLink:string}, index: number) => (
                           <Card
                             key={index}
                             className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
@@ -258,6 +257,7 @@ export default function DriveId({ params }: { params: any }) {
                             <CardContent className="p-4 flex flex-col items-center justify-center">
                               {icons[type as keyof typeof icons]}
                               <p className="mt-2 text-sm text-center truncate w-full">
+              
                                 {file.name}
                               </p>
                               <DropdownMenu>
@@ -297,7 +297,7 @@ export default function DriveId({ params }: { params: any }) {
                           </Card>
                         ))}
                     <Card className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden">
-                      <Link href={`/show/${type}`}>
+                      <Link href={`/${params.driveId}/show/${type}`}>
                         <CardContent className="p-4 flex flex-col items-center justify-center">
                           <ChevronRight className="h-8 w-8" />
                           <p className="mt-2 text-sm text-center truncate w-full">

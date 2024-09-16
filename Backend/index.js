@@ -147,6 +147,7 @@ app.get('/fetch-files', async (req, res) => {
  
 
     for (const tokens of userTokens) {
+    
       const { files, nextPageToken } = await fetchFilesWithPagination(tokens, pageSize, pageToken);
       // console.log(files);
       allFiles = allFiles.concat(files);
@@ -262,21 +263,23 @@ app.post('/upload-file', upload.single('file'), async (req, res) => {
 
 app.get('/fetch-drive',async(req,res)=>{
   const gmail_id=req.headers['gmail_id'];
+  console.log("sdf",gmail_id)
   const usertoken=[];
  const cached= await redis.get(gmail_id);
-  if(cached)
-  {
-    console.log(cached);
-    return res.send(JSON.parse(cached));
-  }
+  // if(cached)
+  // {
+  //   console.log(cached);
+  //   return res.send(JSON.parse(cached));
+  // }
   const user=await User.findOne({gmail_id:gmail_id});
   const pageSize = parseInt(req.query.pageSize) || 10; 
   let pageToken = req.query.pageToken || null; 
   let allFiles = [];
 
     do{
+      // console.log('debug',user.access_token, pageSize, pageToken);
       const { files, nextPageToken } = await fetchFilesWithPagination(user.access_token, pageSize, pageToken);
-      // console.log(files);
+      console.log(files,nextPageToken);
       allFiles = allFiles.concat(files);
 
       if (nextPageToken) {
@@ -303,7 +306,7 @@ app.get('/get-accounts', async (req, res) => {
 
   try {
       const response = await User.find({ Admin_id: userid });
-      console.log(response);
+      // console.log(response);
       await setKeyWithDefaultExpiry(key,JSON.stringify({
         "Accounts": response
     }))

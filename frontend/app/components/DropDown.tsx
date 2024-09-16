@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useUser } from '@clerk/nextjs'; 
 import Link from 'next/link';
+import Image from 'next/image';
 
 
 const DropDown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]); 
   const { user } = useUser();  
 
@@ -58,7 +60,7 @@ const DropDown: React.FC = () => {
           <ul className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
             {accounts.map((account) => (
               <Link prefetch={true} href={`/${account.gmail_id}`} key={account.id} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
-                <img src={account.picture} alt={account.name} className="w-8 h-8 rounded-full mr-2" />
+                <Image src={account.picture} alt={account.name} className="w-8 h-8 rounded-full mr-2" />
                 <span>{account.name}</span>
               </Link>
             ))}

@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   HardDrive,
   Plus,
-  User,
   Home,
   MemoryStick,
 } from "lucide-react";
@@ -18,6 +17,7 @@ import Image from "next/image";
 
 export default function DriveMounter() {
   const { user } = useUser();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]);
 
 

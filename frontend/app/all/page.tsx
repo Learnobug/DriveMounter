@@ -40,9 +40,9 @@ export default function EnhancedDriveMounter() {
   const [selectedDrive, setSelectedDrive] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   const { user } = useUser();
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<never[]>([]);
   const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
-  const { files, loading, nextPageToken, fetchFiles } = useFiles();
+  const { files,  fetchFiles } = useFiles();
 
 
   
@@ -77,10 +77,11 @@ export default function EnhancedDriveMounter() {
     window.location.href = response.data.authUrl;
   };
 
-  const toggleMenu = (index: any) => {
+  const toggleMenu = (index: number) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function downloadFile(fileId: any) {
     try {
       const userId = user?.id;
@@ -109,9 +110,11 @@ export default function EnhancedDriveMounter() {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function deleteFile(fileId: any) {
     try {
       const userId = user?.id;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const response = await axios.delete("http://localhost:3000/delete-file", {
         params: { fileId, userId },
       });
@@ -140,7 +143,8 @@ export default function EnhancedDriveMounter() {
           >
             All Drives
           </Link>
-          {accounts.map((drive) => (
+      
+          {accounts && accounts.map((drive:{ gmail_id: string; name: string }) => (
             <Link
               className="block px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
               key={drive.gmail_id}
@@ -163,11 +167,11 @@ export default function EnhancedDriveMounter() {
                   <SelectValue placeholder="All Drives" />
                 </SelectTrigger>
                 <SelectContent>
-                  {accounts.map((drive) => (
-                    <SelectItem key={drive.gmail_id} value={drive}>
-                      {drive.name}
-                    </SelectItem>
-                  ))}
+                {accounts.map((drive: { gmail_id: string; name: string }) => (
+                  <SelectItem key={drive.gmail_id} value={drive.gmail_id}>
+                    {drive.name}
+                  </SelectItem>
+                ))}
                 </SelectContent>
               </Select>
             </div>
@@ -204,12 +208,14 @@ export default function EnhancedDriveMounter() {
                 <ScrollArea className="h-[calc(100vh-220px)]">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     {files[type]
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       .filter((file: any) =>
                         file.name
                           .toLowerCase()
                           .includes(searchQuery.toLowerCase())
                       )
                       .slice(0, 15)
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       .map((file: any, index: number) => (
                         <Card
                           key={index}

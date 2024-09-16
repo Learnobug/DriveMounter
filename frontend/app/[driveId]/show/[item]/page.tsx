@@ -43,6 +43,7 @@ const imageFiles = Array.from({ length: 24 }, (_, i) => ({
   selected: false,
 }));
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function EnhancedImageGallery({ params }: { params: any }) {
   const [selectedDrive, setSelectedDrive] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -51,11 +52,13 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
   const { user } = useUser();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]);
+
   const [, setPageToken] = useState(null);
   const [, setLoading] = useState(false);
   const item = params.item as keyof typeof files;
-  const id = user?.id;
+
   const [, setloadmore] = useState(true);
+ 
 
   type FileType = {
     id: number;
@@ -98,9 +101,9 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
   const fetchFiles = async (nextPageToken: any) => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/fetch-files", {
+      const response = await axios.get("http://localhost:3000/fetch-drive", {
         headers: {
-          user_id: id,
+          gmail_id: params.driveId,
         },
         params: {
           pageSize: 100,
@@ -141,7 +144,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     fetchFiles(null); // Fetch the first page of files
   }, [user]);
 
-
+  
 
   const filteredFiles = files[item].filter((img) =>
     img.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -163,8 +166,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     setImages(images.map((img) => ({ ...img, selected: false })));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function downloadFile(fileId: any) {
+  async function downloadFile(fileId: string) {
     try {
       const userId = user?.id;
       const response = await axios.get("http://localhost:3000/download-file", {
@@ -193,8 +195,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function deleteFile(fileId: any) {
+  async function deleteFile(fileId: string) {
     try {
       const userId = user?.id;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -309,7 +310,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
                   : "grid-cols-1"
               }`}
             >
-              {filteredFiles.map((file) => (
+              {filteredFiles.map((file:any) => (
                 <Link key={file.id} href={file.webViewLink}>
                   <Card
                     className={`overflow-hidden ${

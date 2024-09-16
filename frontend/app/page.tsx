@@ -7,14 +7,16 @@ import Link from "next/link";
 import { useFiles } from '../app/context/FileContext';
 import { icons } from '../app/lib/icons';
 import { redirect } from "next/navigation";
+import Image from "next/image";
 
 export default function Home() {
   return redirect('/dashboard');
   const { user } = useUser();
-  const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
+  const [openMenuIndex, setOpenMenuIndex] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]); 
   
-  const toggleMenu = (index: any) => {
+  const toggleMenu = (index: string) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   };
 
@@ -31,7 +33,7 @@ export default function Home() {
       console.error('Error fetching accounts:', error);
     }
   }
-  async function deleteFile(fileId:any) {
+  async function deleteFile(fileId:string) {
     try {
       const userId = user?.id;
       const response = await axios.delete('http://localhost:3000/delete-file', {
@@ -47,7 +49,7 @@ export default function Home() {
     }
   }
 
-  async function downloadFile(fileId:any) {
+  async function downloadFile(fileId:string) {
     try {
       const userId = user?.id;
       const response = await axios.get('http://localhost:3000/download-file', {
@@ -120,7 +122,7 @@ export default function Home() {
                 </button>
                 {accounts.map((account) => (
               <Link prefetch={true} href={`/${account.gmail_id}`} key={account.id} className=" flex  block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                <img src={account.picture} alt={account.name} className="w-8 h-8 rounded-full mr-2" />
+                <Image src={account.picture} alt={account.name} className="w-8 h-8 rounded-full mr-2" />
                 <span>{account.name}</span>
                 <div className="flex flex-col gap-2 p-1">
                 <div className="gap-2">{account.Storage}GB/15GB</div>
@@ -135,6 +137,7 @@ export default function Home() {
         <div className="col-span-4 p-4 overflow-y-auto">
           {Object.entries(files).map(
             ([category, items]) => 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (items as any[]).length > 0 && (
                 <div key={category} className="mb-6">
                   <div className="flex justify-between">
@@ -144,7 +147,9 @@ export default function Home() {
                     <Link prefetch={true} href={`/show-more/${category}`}>Show More -&gt; </Link>
                   </div>
                   <ul className="flex gap-10 overflow-hidden">
-                    {(items as any[]).slice(0, 6).map((file: any, index: number) => (
+                    {
+                       // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+                    (items as any[]).slice(0, 6).map((file: any, index: number) => (
                       <div key={file._id}>
                         <Link
                           target="blank"
