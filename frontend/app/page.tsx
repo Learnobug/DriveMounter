@@ -139,7 +139,7 @@ export default function Home() {
             ([category, items]) => 
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             //ts-ignore
-              (items as any[]).length > 0 && (
+              (items as { _id: string; webViewLink: string; name: string; }[]).length > 0 && (
                 <div key={category} className="mb-6">
                   <div className="flex justify-between">
                     <h3 className="text-xl font-semibold mb-4">
