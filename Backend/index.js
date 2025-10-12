@@ -86,7 +86,7 @@ app.get('/oauth2callback', async (req, res) => {
     const userexist=await User.findOne({gmail_id:userinfo.gmail_id});
     if(userexist)
     {
-      res.redirect('http://localhost:3001');
+      res.redirect('https://drive-mounter-6a39.vercel.app');
       return;
     }
 
@@ -118,7 +118,7 @@ app.get('/oauth2callback', async (req, res) => {
     await newuser.save();
     console.log(newuser)
     // res.send('Google Drive connected successfully!');
-    res.redirect('http://localhost:3001')
+    res.redirect('https://drive-mounter-6a39.vercel.app')
 
   } catch (error) {
     console.error('Error exchanging code for token:', error.response ? error.response.data : error.message);
