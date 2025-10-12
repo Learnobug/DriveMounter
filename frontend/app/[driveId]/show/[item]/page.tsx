@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,6 +47,7 @@ const imageFiles = Array.from({ length: 24 }, (_, i) => ({
 export default function EnhancedImageGallery({ params }: { params: any }) {
   const [selectedDrive, setSelectedDrive] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = React.useState(imageFiles);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const { user } = useUser();
@@ -96,6 +97,29 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
       console.error("Error fetching accounts:", error);
     }
   };
+
+  const handleUpload = async () => {
+    if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files.length > 0) {
+      const files = fileInputRef.current?.files;
+      if (!files) return;
+      const file = files[0];
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("driveId", params.driveId);
+
+      try {
+        await axios.post("http://localhost:3000/upload-file", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
+    }
+  };
+
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fetchFiles = async (nextPageToken: any) => {
@@ -270,10 +294,16 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
                   <Grid className="h-4 w-4" />
                 )}
               </Button>
-              <Button>
+              <Button onClick={() => fileInputRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
               </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleUpload}
+              />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">Actions</Button>

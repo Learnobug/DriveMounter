@@ -36,11 +36,13 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
   });
   const [pageToken, setPageToken] = useState(null); 
   const [loading, setLoading] = useState(false);
-  const [openMenuIndex, setOpenMenuIndex] = useState<number | null>(null);
+  const [openMenuIndex, setOpenMenuIndex] = useState<string | null>(null);
   const [loadmore,setloadmore]=useState(true);
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toggleMenu = (index: any) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
   }
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function deleteFile(fileId: any) {
     try {
       const response = await axios.delete('http://localhost:3000/delete-file', {
@@ -56,7 +58,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
       console.error('Error deleting the file:', (error as Error).message);
     }
   }
-
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function downloadFile(fileId:any) {
     try {
       const response = await axios.get('http://localhost:3000/download-file', {
@@ -82,6 +84,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
       console.error('Error downloading the file:', (error as Error).message);
     }
   }
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const addFiles = (newFiles:any) => {
     setFiles(prevFiles => ({
       ...prevFiles,
@@ -89,7 +92,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
     }));
     console.log('called2', files);
   };
-  
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const fetchFiles = async (nextPageToken:any) => {
     console.log(pageToken)
     setLoading(true);
@@ -136,7 +139,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
         </h3>
       </div >
       <div className="flex flex-wrap gap-4">
-      {(files[item] || []).map((file: any) => (
+      {(files[item] || []).map((file: { _id: string; webViewLink: string; name: string; }) => (
         <div key={file._id}>
           <Link
             target="_blank"

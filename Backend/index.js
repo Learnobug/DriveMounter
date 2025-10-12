@@ -239,15 +239,13 @@ app.post('/upload-file', upload.single('file'), async (req, res) => {
   const { driveId } = req.body;
   const file = req.file; 
 
-  console.log('hey', req.body);
-  console.log('file', file);
-
   const user = await User.findOne({ gmail_id: driveId });
   if (!user) {
     return res.json({ msg: 'User does not exist' });
   }
-
   const token = user.access_token;
+  const driveStorage=getDriveStorageDetails(token);
+  console.log("file info :",file.size,driveStorage)
   await UplaodFile(file,token);
   const storage=await getDriveStorageDetails(token);
   const storageQuota = storage.storageQuota;

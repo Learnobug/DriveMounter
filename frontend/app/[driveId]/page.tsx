@@ -45,7 +45,7 @@ export default function DriveId({ params }: { params: any }) {
     folder: [],
     others: [],
   });
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [openMenuIndex, setOpenMenuIndex] = useState<string | null>(null);
 
   const toggleMenu = (index: string) => {
@@ -107,28 +107,7 @@ export default function DriveId({ params }: { params: any }) {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleUpload = async () => {
-    if (fileInputRef.current && fileInputRef.current.files && fileInputRef.current.files.length > 0) {
-      const files = fileInputRef.current?.files;
-      if (!files) return;
-      const file = files[0];
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("driveId", params.driveId);
-
-      try {
-        await axios.post("http://localhost:3000/upload-file", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      } catch (error) {
-        console.error("Error uploading file:", error);
-      }
-    }
-  };
-
+ 
   const FetchData = async () => {
     const pageToken = null;
     const response = await axios.get("http://localhost:3000/fetch-drive", {
