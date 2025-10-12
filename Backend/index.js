@@ -23,16 +23,15 @@ app.use(cookieParser());
 
 connectToDatabase();
 
+const CLIENT_ID = process.env.CLIENT_ID
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
+const SCOPES = process.env.SCOPES;
 
 
 
 
-const CLIENT_ID = "394660286643-a6ljdkjphlbipk6cegvu9lp62bc57hbb.apps.googleusercontent.com"
-const CLIENT_SECRET = "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"
-const REDIRECT_URI = "http://localhost:3000/oauth2callback"
-const SCOPES = ['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive.file', 
-  'https://www.googleapis.com/auth/userinfo.profile', 
-  'https://www.googleapis.com/auth/userinfo.email'   ]
+
 
 const upload = multer({ dest: 'uploads/' });
 
@@ -51,10 +50,6 @@ async function getUserInfo(accessToken) {
   }
 }
 
-// const CLIENT_ID = process.env.CLIENT_ID
-// const CLIENT_SECRET = process.env.CLIENT_SECRET;
-// const REDIRECT_URI = process.env.REDIRECT_URI;
-// const SCOPES = process.env.SCOPES
 
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
