@@ -5,6 +5,7 @@ import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import { categorizeCategory, icons } from '../../lib/icons';
 import { useUser } from "@clerk/clerk-react";
+import { useCallback } from "react";
 
 type FileCategory = 'image' | 'video' | 'audio' | 'document' | 'folder' | 'others';
 
@@ -13,19 +14,19 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
   const id = user?.id;
   const item = params.item;
   
-  type File = {
+  type DriveFile = {
     _id: string;
     name: string;
     webViewLink: string;
   };
   
   const [files, setFiles] = useState<{
-    image: File[];
-    video: File[];
-    audio: File[];
-    document: File[];
-    folder: File[];
-    others: File[];
+    image: DriveFile[];
+    video: DriveFile[];
+    audio: DriveFile[];
+    document: DriveFile[];
+    folder: DriveFile[];
+    others: DriveFile[];
   }>({
     image: [],
     video: [],
@@ -34,22 +35,19 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
     folder: [],
     others: [],
   });
-  const [pageToken, setPageToken] = useState(null); 
+  const [pageToken, setPageToken] = useState<string | null>(null); 
   const [loading, setLoading] = useState(false);
   const [openMenuIndex, setOpenMenuIndex] = useState<string | null>(null);
   const [loadmore,setloadmore]=useState(true);
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const toggleMenu = (index: any) => {
+  const toggleMenu = (index: string) => {
     setOpenMenuIndex(openMenuIndex === index ? null : index);
-  }
-   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function deleteFile(fileId: any) {
+  };
+  async function deleteFile(fileId: string) {
     try {
       const response = await axios.delete('https://drivemounter-3.onrender.com/delete-file', {
         params: { fileId, userId: id },
       });
       console.log(response.data);
-      // Optionally, remove the deleted file from the state
       setFiles(prevFiles => ({
         ...prevFiles,
         [item]: prevFiles[item].filter(file => file._id !== fileId)
@@ -58,17 +56,16 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
       console.error('Error deleting the file:', (error as Error).message);
     }
   }
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async function downloadFile(fileId:any) {
+  async function downloadFile(fileId: string) {
     try {
       const response = await axios.get('https://drivemounter-3.onrender.com/download-file', {
         params: { fileId, userId: id },
         responseType: 'blob'
       });
 
-      const contentDisposition = response.headers['content-disposition'];
+      const contentDisposition = response.headers['content-disposition'] as string | undefined;
       const fileName = contentDisposition
-        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '') ?? 'downloaded_file'
         : 'downloaded_file';
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -84,17 +81,13 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
       console.error('Error downloading the file:', (error as Error).message);
     }
   }
-   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const addFiles = (newFiles:any) => {
+  const addFiles = useCallback((newFiles: DriveFile[]) => {
     setFiles(prevFiles => ({
       ...prevFiles,
       [item]: [...prevFiles[item], ...newFiles],
     }));
-    console.log('called2', files);
-  };
-   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fetchFiles = async (nextPageToken:any) => {
-    console.log(pageToken)
+  }, [item]);
+  const fetchFiles = useCallback(async (nextPageToken: string | null) => {
     setLoading(true);
     try {
       const response = await axios.get("https://drivemounter-3.onrender.com/fetch-files", {
@@ -103,12 +96,12 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
         },
         params: {
           pageSize: 100,
-          pageToken: nextPageToken
+          pageToken: nextPageToken ?? undefined
         }
       });
-      const { files: fetchedFiles, nextPageToken: newPageToken } = response.data;
+      const { files: fetchedFiles, nextPageToken: newPageToken } = response.data as { files: DriveFile[]; nextPageToken: string | null };
 
-      const categorizedFiles = categorizeCategory(fetchedFiles, item);
+      const categorizedFiles = categorizeCategory(fetchedFiles, item) as DriveFile[];
       addFiles(categorizedFiles);
       setPageToken(newPageToken);
       if(!newPageToken) setloadmore(false);
@@ -118,7 +111,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, item, addFiles]);
   
   useEffect(() => {
     fetchFiles(null); // Fetch the first page of files
@@ -139,7 +132,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
         </h3>
       </div >
       <div className="flex flex-wrap gap-4">
-      {(files[item] || []).map((file: { _id: string; webViewLink: string; name: string; }) => (
+      {(files[item] || []).map((file: DriveFile) => (
         <div key={file._id}>
           <Link
             target="_blank"
