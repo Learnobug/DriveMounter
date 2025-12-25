@@ -60,7 +60,8 @@ app.get('/auth', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline', 
     scope: SCOPES,
-    state: id
+    state: id,
+    prompt: 'consent'
   });
   res.json({authUrl});
 });
