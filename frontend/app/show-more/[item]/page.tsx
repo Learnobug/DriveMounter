@@ -115,7 +115,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
   
   useEffect(() => {
     fetchFiles(null); // Fetch the first page of files
-  }, [user]);
+  }, [fetchFiles]);
 
   const handleLoadMore = () => {
     if (pageToken) {
