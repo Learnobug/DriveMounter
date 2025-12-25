@@ -60,6 +60,7 @@ app.get('/auth', (req, res) => {
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline', 
     scope: SCOPES,
+    state: id
   });
   res.json({authUrl});
 });
@@ -67,6 +68,7 @@ app.get('/auth', (req, res) => {
 // OAuth2 callback route
 app.get('/oauth2callback', async (req, res) => {
   const code = req.query.code;
+  const state=req.query.state;
   try {
     connectToDatabase();
     const { tokens } = await oauth2Client.getToken(code);
@@ -101,7 +103,7 @@ app.get('/oauth2callback', async (req, res) => {
     const gb=Number(usedGB).toFixed(2);
   
     const newuser= await User.create({
-      Admin_id: id,
+      Admin_id: state,
       gmail_id:userinfo.id,
       name:userinfo.name,
       given_name:userinfo.given_name,
