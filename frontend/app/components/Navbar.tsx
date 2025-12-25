@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
     const { user } = useUser();
     console.log(user?.id)
     const handleClick = async () => {
-        const response = await axios.get('http://localhost:3000/auth',{headers:{
+        const response = await axios.get('https://drivemounter-3.onrender.com/auth',{headers:{
              user_id:user?.id
         }});
         window.location.href = response.data.authUrl;

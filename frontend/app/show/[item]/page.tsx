@@ -83,7 +83,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
 
   const Get_accounts = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/get-accounts", {
+      const response = await axios.get("https://drivemounter-3.onrender.com/get-accounts", {
         headers: {
           user_id: user?.id,
         },
@@ -98,7 +98,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
   const fetchFiles = async (nextPageToken: any) => {
     setLoading(true);
     try {
-      const response = await axios.get("http://localhost:3000/fetch-files", {
+      const response = await axios.get("https://drivemounter-3.onrender.com/fetch-files", {
         headers: {
           user_id: id,
         },
@@ -167,7 +167,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
   async function downloadFile(fileId: any) {
     try {
       const userId = user?.id;
-      const response = await axios.get("http://localhost:3000/download-file", {
+      const response = await axios.get("https://drivemounter-3.onrender.com/download-file", {
         params: { fileId, userId },
         responseType: "blob",
       });
@@ -198,7 +198,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     try {
       const userId = user?.id;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const response = await axios.delete("http://localhost:3000/delete-file", {
+      const response = await axios.delete("https://drivemounter-3.onrender.com/delete-file", {
         params: { fileId, userId },
       });
     } catch (error) {
@@ -206,7 +206,7 @@ export default function EnhancedImageGallery({ params }: { params: any }) {
     }
   }
   const handleClick = async () => {
-    const response = await axios.get("http://localhost:3000/auth", {
+    const response = await axios.get("https://drivemounter-3.onrender.com/auth", {
       headers: {
         user_id: user?.id,
       },
