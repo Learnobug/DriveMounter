@@ -45,7 +45,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function deleteFile(fileId: any) {
     try {
-      const response = await axios.delete('https://drivemounter-3.onrender.com/delete-file', {
+      const response = await axios.delete('http://drivemounter-3.onrender.com/delete-file', {
         params: { fileId, userId: id },
       });
       console.log(response.data);
@@ -61,7 +61,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function downloadFile(fileId:any) {
     try {
-      const response = await axios.get('https://drivemounter-3.onrender.com/download-file', {
+      const response = await axios.get('http://drivemounter-3.onrender.com/download-file', {
         params: { fileId, userId: id },
         responseType: 'blob'
       });
@@ -97,7 +97,7 @@ export default function Showmore({ params }:{params:{item: FileCategory}}) {
     console.log(pageToken)
     setLoading(true);
     try {
-      const response = await axios.get("https://drivemounter-3.onrender.com/fetch-files", {
+      const response = await axios.get("http://drivemounter-3.onrender.com/fetch-files", {
         headers: {
           user_id: id,
         },

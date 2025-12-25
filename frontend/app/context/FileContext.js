@@ -42,7 +42,7 @@ export const FilesProvider = ({ children }) => {
     }
     setLoading(true);
     try {
-      const response = await axios.get("https://drivemounter-3.onrender.com/fetch-files", {
+      const response = await axios.get("http://drivemounter-3.onrender.com/fetch-files", {
         headers: {
           user_id: user.id,
         },
