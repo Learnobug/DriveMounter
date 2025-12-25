@@ -33,7 +33,7 @@ export default function DriveMounter() {
 
   const Get_accounts = async () => {
     try {
-      const response = await axios.get("http://drivemounter-3.onrender.com/get-accounts", {
+      const response = await axios.get("https://drivemounter-3.onrender.com/get-accounts", {
         headers: {
           user_id: user?.id,
         },
@@ -47,7 +47,7 @@ export default function DriveMounter() {
 
 
   const handleClick = async () => {
-    const response = await axios.get('http://drivemounter-3.onrender.com/auth',{headers:{
+    const response = await axios.get('https://drivemounter-3.onrender.com/auth',{headers:{
          user_id:user?.id
     }});
     window.location.href = response.data.authUrl;

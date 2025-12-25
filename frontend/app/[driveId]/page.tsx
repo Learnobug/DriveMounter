@@ -54,7 +54,7 @@ export default function DriveId({ params }: { params: any }) {
 
   const Get_accounts = async () => {
     try {
-      const response = await axios.get("http://drivemounter-3.onrender.com/get-accounts", {
+      const response = await axios.get("https://drivemounter-3.onrender.com/get-accounts", {
         headers: {
           user_id: user?.id,
         },
@@ -68,7 +68,7 @@ export default function DriveId({ params }: { params: any }) {
 
   async function deleteFile(fileId:string) {
     const userId = user?.id;
-    const response = await axios.delete("http://drivemounter-3.onrender.com/delete-file", {
+    const response = await axios.delete("https://drivemounter-3.onrender.com/delete-file", {
       params: { fileId, userId },
     });
     console.log(response.data);
@@ -78,7 +78,7 @@ export default function DriveId({ params }: { params: any }) {
     try {
       const userId = user?.id;
       console.log("file", fileId);
-      const response = await axios.get("http://drivemounter-3.onrender.com/download-file", {
+      const response = await axios.get("https://drivemounter-3.onrender.com/download-file", {
         params: { fileId, userId },
         responseType: "blob",
       });
@@ -110,7 +110,7 @@ export default function DriveId({ params }: { params: any }) {
  
   const FetchData = async () => {
     const pageToken = null;
-    const response = await axios.get("http://drivemounter-3.onrender.com/fetch-drive", {
+    const response = await axios.get("https://drivemounter-3.onrender.com/fetch-drive", {
       headers: { gmail_id: params.driveId },
       params: {
         pageSize: 100,
@@ -129,7 +129,7 @@ export default function DriveId({ params }: { params: any }) {
   }, [user]);
 
   const handleClick = async () => {
-    const response = await axios.get("http://drivemounter-3.onrender.com/auth", {
+    const response = await axios.get("https://drivemounter-3.onrender.com/auth", {
       headers: {
         user_id: user?.id,
       },
